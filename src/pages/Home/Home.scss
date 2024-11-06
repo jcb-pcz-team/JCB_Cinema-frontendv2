@@ -1,0 +1,36 @@
+@use '../../assets/styles/index' as i;
+
+.home {
+  @include i.flex-center;
+  flex-direction: column;
+  height: 100vh;
+
+  background-image: url("src/assets/images/background-home.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  text-align: center;
+
+  &__header {
+    padding: 0 2em;
+  }
+
+  &__paragraph {
+    margin: 1em 2em;
+  }
+
+  &__form {
+    @include i.flex-center;
+    width: 100%;
+    padding: 0 2em;
+  }
+
+  &__input-search {
+    max-width: 35em;
+  }
+
+  .button-search {
+    margin-left: .4em;
+  }
+}

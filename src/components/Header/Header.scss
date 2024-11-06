@@ -1,6 +1,7 @@
 @use '../../assets/styles/index' as i;
 
 .header {
+  position: fixed;
   width: 100%;
   display: flex;
   align-items: center;
@@ -20,6 +21,7 @@
     border: 2px solid i.$primary-color;
     border-radius: 10px;
     padding: .5rem 1rem;
+    cursor: pointer;
 
       .paragraph {
         font-weight: 500;

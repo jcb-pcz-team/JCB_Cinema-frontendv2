@@ -1,0 +1,11 @@
+@use '../../assets/styles/index' as i;
+
+.button {
+  @include i.flex-center;
+  height: 100%;
+  background-color: i.$primary-color;
+  padding: 0 1em;
+  margin-left: .4em;
+  border-radius: 5px;
+  cursor: pointer;
+}
