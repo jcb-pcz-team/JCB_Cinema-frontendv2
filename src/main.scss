@@ -6,4 +6,47 @@ body {
   font-family: i.$font-family;
   background-color: i.$background-color;
   color: i.$text-color;
+
+  font-size: .625rem; // 10px
+
+  @include i.respond-to(tablet) {
+    font-size: .75rem; // 12px
+  }
+
+  @include i.respond-to(desktop) {
+    font-size: .875rem; // 14px
+  }
+
+  @include i.respond-to(large-desktop) {
+    font-size: 1rem; // 16px
+  }
+}
+
+.logo {
+  width: 150px;
+  height: 30px;
+
+  @include i.respond-to(tablet) {
+    width: 180px;
+    height: 36px;
+  }
+
+  @include i.respond-to(desktop) {
+    width: 200px;
+    height: 40px;
+  }
+
+  @include i.respond-to(large-desktop) {
+    width: 225px;
+    height: 45px;
+  }
+}
+
+.overlay {
+  border-image:
+          linear-gradient(
+                  rgba(0, 0, 0, 1),
+                  rgba(0, 0, 0, .55), rgba(0, 0, 0, .55),
+                  rgba(0, 0, 0, 1))
+          fill 1;
 }

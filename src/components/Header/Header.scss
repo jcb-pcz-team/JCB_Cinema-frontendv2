@@ -16,26 +16,6 @@
     padding: 2rem 3rem;
   }
 
-  .logo {
-    width: 150px;
-    height: 30px;
-
-    @include i.respond-to(tablet) {
-      width: 180px;
-      height: 36px;
-    }
-
-    @include i.respond-to(desktop) {
-      width: 200px;
-      height: 40px;
-    }
-
-    @include i.respond-to(large-desktop) {
-      width: 225px;
-      height: 45px;
-    }
-  }
-
   .login-btn {
     border: 2px solid i.$primary-color;
     border-radius: 10px;

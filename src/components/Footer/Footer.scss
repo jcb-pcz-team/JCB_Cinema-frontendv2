@@ -1,0 +1,50 @@
+@use '../../assets/styles/index' as i;
+
+.footer {
+  @include i.flex-center;
+  flex-direction: column;
+
+  &__info {
+    @include i.flex-center;
+    width: 100%;
+    flex-direction: column;
+    padding: 2.5em 1.5em;
+
+    background-image: url("src/assets/images/red-seats.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  &__social {
+    text-align: center;
+
+    &-text {
+      font-size: 1.4em;
+      font-weight: 500;
+    }
+
+    &-icons {
+      @include i.flex-center;
+      flex-direction: row;
+
+      padding-top: 1em;
+    }
+
+    &-icon {
+      margin: 0 .4em;
+    }
+  }
+
+
+  &__description {
+    padding: 1em 0;
+    text-align: center;
+    line-height: 1.3em;
+  }
+
+  &__copyright {
+    padding: 1.5em;
+    color: i.$primary-color;
+  }
+}
