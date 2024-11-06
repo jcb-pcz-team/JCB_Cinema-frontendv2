@@ -1,0 +1,48 @@
+@use '../../assets/styles/index' as i;
+
+.header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 1rem;
+
+  @include i.respond-to(desktop) {
+    padding: 1rem 2rem;
+  }
+
+  @include i.respond-to(large-desktop) {
+    padding: 2rem 3rem;
+  }
+
+  .logo {
+    width: 150px;
+    height: 30px;
+
+    @include i.respond-to(tablet) {
+      width: 180px;
+      height: 36px;
+    }
+
+    @include i.respond-to(desktop) {
+      width: 200px;
+      height: 40px;
+    }
+
+    @include i.respond-to(large-desktop) {
+      width: 225px;
+      height: 45px;
+    }
+  }
+
+  .login-btn {
+    border: 2px solid i.$primary-color;
+    border-radius: 10px;
+    padding: .5rem 1rem;
+
+      .paragraph {
+        font-weight: 500;
+      }
+  }
+}
