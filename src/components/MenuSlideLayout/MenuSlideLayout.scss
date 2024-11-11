@@ -1,0 +1,10 @@
+@use '../../assets/styles/index' as i;
+
+.list {
+  margin-top: -10vh;
+
+  &__item {
+    font-size: 2rem;
+    margin: 1.2rem 0;
+  }
+}

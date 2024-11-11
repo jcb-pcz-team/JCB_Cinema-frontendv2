@@ -6,7 +6,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   padding: 1rem;
 
   @include i.respond-to(desktop) {
@@ -17,14 +16,26 @@
     padding: 2rem 3rem;
   }
 
-  .login-btn {
-    border: 2px solid i.$primary-color;
-    border-radius: 10px;
-    padding: .5rem 1rem;
-    cursor: pointer;
+  &__nav {
+    display: flex;
 
-      .paragraph {
-        font-weight: 500;
-      }
+    .button-profile {
+
+    }
+
+
+    .button-menu {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      background-color: rgba(255, 255, 255, .3);
+    }
+
+    & > * {
+      margin-left: 1.2rem;
+    }
   }
 }
