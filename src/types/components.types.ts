@@ -10,6 +10,6 @@ export interface InputProps {
 
 export interface ButtonProps {
     type?: "submit" | "reset" | "button";
-    className?: string;
     children: React.ReactNode | string;
+    buttonColor: string;
 }

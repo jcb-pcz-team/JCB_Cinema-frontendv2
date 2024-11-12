@@ -46,7 +46,7 @@ body {
   border-image:
           linear-gradient(
                   rgba(0, 0, 0, 1),
-                  rgba(0, 0, 0, .01), rgba(0, 0, 0, .01), rgba(0, 0, 0, .01),
+                  rgba(0, 0, 0, .5), rgba(0, 0, 0, .4), rgba(0, 0, 0, .5),
                   rgba(0, 0, 0, 1))
           fill 1;
 }
