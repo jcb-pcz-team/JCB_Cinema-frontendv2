@@ -1,0 +1,47 @@
+@use '../../assets/styles/index' as i;
+
+.header-mobile {
+  position: fixed;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  backdrop-filter: blur(5px);
+
+  .logo {
+    width: auto;
+    max-height: 30px;
+    display: flex;
+    object-fit: contain;
+  }
+
+  @include i.respond-to(desktop) {
+    padding: 1rem 2rem;
+  }
+
+  @include i.respond-to(large-desktop) {
+    padding: 2rem 3rem;
+  }
+
+  &__navbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .button-search,
+    .button-login {
+      margin-right: 1rem;
+    }
+
+    .button-menu {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      background-color: rgba(255, 255, 255, .3);
+    }
+  }
+}

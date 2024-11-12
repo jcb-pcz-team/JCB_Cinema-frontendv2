@@ -1,49 +1,25 @@
 import './Header.scss';
-import React, {useState} from "react";
-import {MenuSlideLayout} from "../MenuSlideLayout/MenuSlideLayout.tsx";
-import {LoginSlideLayout} from "../LoginSlideLayout/LoginSlideLayout.tsx";
-import {SearchSlideLayout} from "../SearchSlideLayout/SearchSlideLayout.tsx";
+import React, {useEffect, useState} from "react";
+import {HeaderMobile} from "../HeaderMobile/HeaderMobile.tsx";
+import {HeaderDesktop} from "../HeaderDesktop/HeaderDesktop.tsx";
+
 
 export const Header : React.FC = () => {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isLoginOpen, setIsLoginOpen] = useState(false);
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 1200);
 
-    function toggleMenu() {
-        setIsMenuOpen(!isMenuOpen);
-    }
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 1200);
+        };
 
-    function toggleLogin() {
-        setIsLoginOpen(!isLoginOpen);
-    }
+        window.addEventListener('resize', handleResize);
 
-    function toggleSearch() {
-        setIsSearchOpen(!isSearchOpen);
-    }
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     return (
-        <header className="header">
-            <img src="src/assets/images/logo.svg" alt="jcb cinema" className="logo"/>
-            <nav className='header__nav'>
-                <button onClick={toggleSearch}
-                        className="button-search"
-                >
-                    <img src="src/assets/images/icon-search.svg" alt="login"/>
-                </button>
-                <button onClick={toggleLogin}
-                        className="button-login"
-                >
-                    <img src="src/assets/images/icon-profile.svg" alt="login"/>
-                </button>
-                <button onClick={toggleMenu}
-                        className="button-menu"
-                >
-                    <img src="src/assets/images/icon-menu_hamburger.svg" alt="menu_hamburger"/>
-                </button>
-            </nav>
-            <MenuSlideLayout isOpen={isMenuOpen} toggleMenu={toggleMenu}/>
-            <LoginSlideLayout isOpen={isLoginOpen} toggleLogin={toggleLogin}/>
-            <SearchSlideLayout isOpen={isSearchOpen} toggleSearch={toggleSearch}/>
-        </header>
+        <>
+            {isMobile ? <HeaderMobile /> : <HeaderDesktop />}
+        </>
     );
 };
