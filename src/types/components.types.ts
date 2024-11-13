@@ -12,4 +12,5 @@ export interface ButtonProps {
     type?: "submit" | "reset" | "button";
     children: React.ReactNode | string;
     buttonColor: string;
+    className?: string;
 }
