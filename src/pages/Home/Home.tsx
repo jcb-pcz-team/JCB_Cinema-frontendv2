@@ -7,24 +7,18 @@ export const Home: React.FC = () => {
     const [movieIndex, setMovieIndex] = useState(0);
     const [currentMovie, setCurrentMovie] = useState(moviesData[movieIndex]);
     const [fade, setFade] = useState(false);
-    const [progress, setProgress] = useState(0);
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setProgress((prev) => {
-                if (prev >= 100) {
                     const newIndex = (movieIndex + 1) % moviesData.length;
                     setFade(true);
                     setTimeout(() => {
                         setMovieIndex(newIndex);
                         setCurrentMovie(moviesData[newIndex]);
                         setFade(false);
-                    }, 800);
+                    }, 1000);
                     return 0;
-                }
-                return prev + 1;
-            });
-        }, 100);
+        }, 8000);
 
         return () => clearInterval(interval);
     }, [movieIndex]);
@@ -46,7 +40,7 @@ export const Home: React.FC = () => {
                     </div>
                     <div className="home__movie-info__item">
                         <img src="src/assets/images/icon-carrier.svg" alt="carrier"/>
-                        <span>GENRE:</span>
+                        <span>{"GENRE: "}</span>
                         <p>{currentMovie.genre.join(", ")}</p>
                     </div>
                 </div>
@@ -57,20 +51,17 @@ export const Home: React.FC = () => {
                     <Button buttonColor="#FCF02D">SEE MORE</Button>
                     <Button buttonColor="#FFFFFF">BUY TICKET</Button>
                 </div>
-                <div className="dots-container">
-                    {Array.from({ length: moviesData.length }).map((_, index) => (
-                        <div
-                            key={index}
-                            className={`dot ${index === movieIndex ? 'dot--active' : ''}`}
-                            style={{
-                                background: index === movieIndex ? 'transparent' : '#ffffff',
-                                borderColor: index === movieIndex ? '#FCF02D' : '#ffffff',
-                                borderWidth: index === movieIndex ? '2px' : '1px',
-                                opacity: index === movieIndex ? progress / 100 : 1,
-                            }}
-                        />
-                    ))}
-                </div>
+            </div>
+            <div className="dots-container">
+                {Array.from({length: moviesData.length}).map((_, index) => (
+                    <div
+                        key={index}
+                        className={`dot ${index === movieIndex ? 'dot--active' : ''}`}
+                        style={{
+                            backgroundColor: index === movieIndex ? '#FCF02DFF' : '#ffffff',
+                        }}
+                    />
+                ))}
             </div>
         </section>
     );
