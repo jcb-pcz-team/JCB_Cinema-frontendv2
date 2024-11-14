@@ -1,6 +1,8 @@
+@use '../../assets/styles/index' as i;
+
 .movie {
   width: 100%;
-  max-width: 1400px;
+  max-width: 1200px;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -10,13 +12,46 @@
   padding: 5rem 1rem 0 1rem;
   margin: 0 auto;
 
+  @include i.respond-to(tablet) {
+    max-width: 577px;
+  }
+
   > * {
     margin: 1rem 0;
   }
 
-  button {
+  &__header {
     width: 100%;
-    border-radius: 3px;
+
+    button {
+      width: 100%;
+      border-radius: 3px;
+      margin: 1rem 0 0 0;
+    }
+
+    @include i.respond-to(desktop) {
+      display: flex;
+      align-content: center;
+      justify-content: space-between;
+
+      button {
+        max-width: 12rem;
+        padding: 1rem 2rem;
+        margin: 0;
+      }
+    }
+
+    @include i.respond-to(large-desktop) {
+      display: flex;
+      align-content: center;
+      justify-content: space-between;
+
+      button {
+        max-width: 12rem;
+        padding: 1rem 2rem;
+        margin: 0;
+      }
+    }
   }
 
   &__video {
@@ -33,10 +68,73 @@
     }
   }
 
+  &__subtitle {
+    font-size: 1.2rem;
+    font-weight: 400;
+  }
+
+  &__content {
+    @include i.respond-to(desktop) {
+      display: flex;
+      flex-direction: row;
+    }
+
+    @include i.respond-to(large-desktop) {
+      display: flex;
+      flex-direction: row;
+    }
+  }
+
+  &__description {
+    @include i.respond-to(desktop) {
+      width: 26rem;
+    }
+
+    @include i.respond-to(large-desktop) {
+      min-width: 28rem;
+    }
+  }
+
+  &__background-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 5px;
+
+    @include i.respond-to(desktop) {
+      max-width: 26rem;
+    }
+
+    @include i.respond-to(large-desktop) {
+      max-width: 32rem;
+    }
+  }
+
+  &__infromation {
+    @include i.respond-to(desktop) {
+      display: flex;
+      flex-direction: column;
+    }
+
+    @include i.respond-to(large-desktop) {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
   &__info {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
+    margin: 1rem 0;
+
+    @include i.respond-to(desktop) {
+      justify-content: start;
+    }
+
+    @include i.respond-to(large-desktop) {
+      justify-content: start;
+    }
 
     &-item {
       display: flex;
@@ -55,13 +153,6 @@
     &-label {
       margin-right: .3rem;
     }
-  }
-
-  img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      border-radius: 5px;
   }
 
   &__details {
@@ -98,5 +189,13 @@
   &__background-image {
     border: 1px solid #FCF02D;
     border-radius: 3px;
+
+    @include i.respond-to(desktop) {
+      margin: 0 0 0 2rem;
+    }
+
+    @include i.respond-to(large-desktop) {
+      margin: 0 0 0 2rem;
+    }
   }
 }
