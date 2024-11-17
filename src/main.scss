@@ -1,26 +1,5 @@
 @use 'assets/styles/index' as i;
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap');
-
-body {
-  font-family: i.$font-family;
-  background-color: i.$background-color;
-  color: i.$text-color;
-
-  font-size: .625rem; // 10px
-
-  @include i.respond-to(tablet) {
-    font-size: .75rem; // 12px
-  }
-
-  @include i.respond-to(desktop) {
-    font-size: .875rem; // 14px
-  }
-
-  @include i.respond-to(large-desktop) {
-    font-size: 1rem; // 16px
-  }
-}
 
 .logo {
   width: 150px;
@@ -47,6 +26,7 @@ body {
           linear-gradient(
                   rgba(0, 0, 0, 1),
                   rgba(0, 0, 0, .5), rgba(0, 0, 0, .4), rgba(0, 0, 0, .5),
-                  rgba(0, 0, 0, 1))
+                  rgba(0, 0, 0, 1)
+          )
           fill 1;
 }

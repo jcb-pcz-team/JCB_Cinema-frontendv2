@@ -1,3 +1,5 @@
+@use "./variables";
+
 h1,
 h2,
 h3,
@@ -20,11 +22,23 @@ a {
 }
 
 .header--primary {
-  font-size: 2rem;
   font-size: clamp(2rem, 1.6rem + 2vw, 4rem);
 }
 
 .header--secondary {
-  font-size: 1.5rem;
   font-size: clamp(1.5rem, 1.2rem + 1.5vw, 3rem);
+}
+
+.header--tertiary {
+  font-size: clamp(1.5rem, 1.2rem + 1.5vw, 3rem);
+}
+
+.paragraph,
+.paragraph--gray{
+  font-size: clamp(0.625rem, 0.179rem + 1.19vw, 1.25rem);
+}
+
+
+.paragraph--gray {
+  font-size: clamp(0.625rem, 0.179rem + 1.19vw, 1.25rem);
 }
