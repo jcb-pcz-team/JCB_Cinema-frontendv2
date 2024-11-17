@@ -8,7 +8,7 @@
   left: 0;
   display: flex;
   flex-direction: column;
-  background-color: i.$black;
+  background-color: i.$clr-black;
   transform: translateX(200%);
   transition: transform 0.3s ease-in-out;
 
@@ -23,7 +23,7 @@
 
   &__title {
     font-size: 1.4rem;
-    color: i.$primary-color;
+    color: i.$clr-yellow;
   }
 
   &__button-close {

@@ -2,12 +2,34 @@
 
 .button {
   width: 8rem;
-  @include i.flex-center;
+  max-width: 8rem;
   height: 100%;
-  margin-left: .4em;;
-  cursor: pointer;
-  border: 3px solid #FCF02D;
-  border-radius: 50px;
+  @include i.flex-center;
+
+  background-color: i.$clr-yellow;
+  border: 3px solid i.$clr-yellow;
+  border-radius: 10px;
+
   padding: .6rem 0;
-  color: black;
+  cursor: pointer;
+
+  @include i.respond-to(desktop) {
+    .button {
+      width: 12rem;
+      max-width: 12rem;
+    }
+  }
+
+  &:hover {
+  background-color: i.$clr-yellow-lt;
+  }
+
+  &--white {
+    background-color: i.$clr-white;
+    border: 3px solid i.$clr-white;
+
+    &:hover {
+      background-color: i.$clr-white-lt;
+    }
+  }
 }

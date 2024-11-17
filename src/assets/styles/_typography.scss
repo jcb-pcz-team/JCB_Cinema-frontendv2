@@ -1,4 +1,4 @@
-@use "./variables";
+@use "./variables" as v;
 
 h1,
 h2,
@@ -23,10 +23,12 @@ a {
 
 .header--primary {
   font-size: clamp(2rem, 1.6rem + 2vw, 4rem);
+  color: v.$clr-white;
 }
 
 .header--secondary {
   font-size: clamp(1.5rem, 1.2rem + 1.5vw, 3rem);
+  color: v.$clr-yellow;
 }
 
 .header--tertiary {
@@ -34,11 +36,19 @@ a {
 }
 
 .paragraph,
-.paragraph--gray{
+.paragraph--gray,
+.paragraph--black{
   font-size: clamp(0.625rem, 0.179rem + 1.19vw, 1.25rem);
 }
 
+.paragraph {
+  color: v.$clr-white;
+}
 
 .paragraph--gray {
-  font-size: clamp(0.625rem, 0.179rem + 1.19vw, 1.25rem);
+  color: v.$clr-gray;
+}
+
+.paragraph--black {
+  color: v.$clr-black;
 }

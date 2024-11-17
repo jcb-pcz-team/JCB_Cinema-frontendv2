@@ -19,7 +19,7 @@ export const Movie: React.FC = () => {
         <section className="movie">
             <div className="movie__header">
                 <h2 className="movie__title header--secondary">Spider Man: No Way Home</h2>
-                <Button className="movie__button" buttonColor="#FCF02D">
+                <Button className="button movie__button">
                     BUY TICKET
                 </Button>
             </div>

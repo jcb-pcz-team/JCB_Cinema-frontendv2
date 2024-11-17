@@ -1,8 +1,10 @@
 // Colors
-$clr-yellow-: rgba(252, 240, 45, 1);
-$clr-white: rgba(255, 255, 255, 1);
-$clr-gray: rgba(155, 154, 154, 1);
-$clr-black: rgba(0, 0, 0, 1);
+$clr-yellow: rgb(252, 240, 45);
+$clr-yellow-lt: rgba(252, 240, 45, .5);
+$clr-white: rgb(255, 255, 255);
+$clr-white-lt: rgb(255, 255, 255, .5);
+$clr-gray: rgb(155, 154, 154);
+$clr-black: rgb(0, 0, 0);
 
 // Font
 $font-family: 'Poppins', sans-serif;

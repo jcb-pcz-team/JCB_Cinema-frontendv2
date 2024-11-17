@@ -2,10 +2,10 @@ import "./Button.scss";
 import React from "react";
 import { ButtonProps } from "../../types/components.types.ts";
 
-export const Button: React.FC<ButtonProps> = ({ type = "button", children, buttonColor, className = ""}) => {
+export const Button: React.FC<ButtonProps> = ({ type = "button", children, className = "button"}) => {
     return (
-        <button style={{backgroundColor: `${buttonColor + "B3"}`, border: `3px solid ${buttonColor}`}} type={type} className={`button ${className}`}>
-            {children}
+        <button onClick={() => console.log('Button clicked!')} type={type} className={`button ${className}`}>
+            <p className="paragraph--black">{children}</p>
         </button>
     );
 };
