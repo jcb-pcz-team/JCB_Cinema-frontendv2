@@ -29,7 +29,7 @@ export const Home: React.FC = () => {
                 setMovieIndex(index);
                 setCurrentMovie(moviesData[index]);
                 setFade(false);
-            }, 500);
+            }, 100);
         }
     };
 

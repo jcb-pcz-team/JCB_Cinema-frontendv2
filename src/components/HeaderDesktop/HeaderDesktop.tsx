@@ -16,7 +16,7 @@ export const HeaderDesktop : React.FC = () => {
                     {['Home', 'Showtimes', 'Upcoming', 'Featured', 'Benefits', 'About'].map((label, index) => (
                         <button
                             key={index}
-                            className={`nav-button ${activeIndex === index ? 'active' : ''}`}
+                            className={`paragraph nav-button ${activeIndex === index ? 'active' : ''}`}
                             onClick={() => handleButtonClick(index)}
                         >
                             {label}
@@ -25,10 +25,10 @@ export const HeaderDesktop : React.FC = () => {
                     ))}
                 </div>
                 <div>
-                    <input className="input-search" type="text" placeholder={"Search For Movies..."}/>
+                    <input className="input-search" type="search" placeholder={"Search For Movies"}/>
                     <div className="auth-buttons">
                         <img className="icon-profile" src="src/assets/images/icon-profile.svg" alt="profile"/>
-                        <p>
+                        <p className="paragraph">
                             Login / Sign in
                         </p>
                     </div>

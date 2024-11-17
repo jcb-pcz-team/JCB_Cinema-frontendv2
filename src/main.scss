@@ -3,6 +3,7 @@
 
 body {
   font-family: 'Poppins', sans-serif;
+  background-color: i.$clr-black;
 }
 
 .logo {
@@ -29,7 +30,7 @@ body {
   border-image:
           linear-gradient(
                   rgba(0, 0, 0, 1),
-                  rgba(0, 0, 0, .5), rgba(0, 0, 0, .4), rgba(0, 0, 0, .5),
+                  rgba(0, 0, 0, .4), rgba(0, 0, 0, .5), rgba(0, 0, 0, .4),
                   rgba(0, 0, 0, 1)
           )
           fill 1;

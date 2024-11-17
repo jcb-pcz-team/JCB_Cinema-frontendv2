@@ -47,7 +47,7 @@ export const moviesData: {
         title: "Interstellar",
         duration: "2H 49M",
         genre: ["Sci-Fi"],
-        description: "Due to mistakes made by humanity in the 20th century, Earth now stands on the brink of destruction. Nations have fallen, and their governments have lost power. The barely functioning economy can no longer even provide people with food. However, when the possibility of space-time travel is discovered, scientists from the remnants of NASA decide to investigate it, becoming humanity's last hope for survival and the salvation of their planet.",
+        description: "Due to mistakes made by humanity in the 20th century, Earth now stands on the brink of destruction. Nations have fallen, and their governments have lost power. The barely functioning economy can no longer even provide people with food.",
         image: "src/assets/images/background-interstellar.png",
         ageRestriction: "13+",
         screeningType: ["2D", "IMAX"],

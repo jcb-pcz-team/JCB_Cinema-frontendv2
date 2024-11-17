@@ -5,15 +5,14 @@
   height: 100vh;
   @include i.flex-center;
   flex-direction: column;
-
   position: relative;
+
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
 
   text-align: center;
   transition: background-image .1s ease-in-out, opacity .8s ease-in-out;
-  z-index: -1337;
 
   @include i.respond-to(large-desktop) {
     display: flex;
@@ -44,7 +43,7 @@
     border-radius: 50%;
     background-color: #ffffff;
     margin: 0 5px;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.1s ease;
 
     &--active {
       background-color: #FCF02D;
