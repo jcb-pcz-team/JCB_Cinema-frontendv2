@@ -17,14 +17,6 @@
     object-fit: contain;
   }
 
-  @include i.respond-to(desktop) {
-    padding: 1rem 2rem;
-  }
-
-  @include i.respond-to(large-desktop) {
-    padding: 2rem 3rem;
-  }
-
   &__navbar {
     display: flex;
     align-items: center;
