@@ -1,0 +1,25 @@
+@use "../../assets/styles/index" as i;
+.dashboard {
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
+  padding: 0 1rem;
+  margin-top: 10vh;
+
+  &__header {
+    color: i.$clr-white;
+  }
+
+  &__menu-list {
+    display: flex;
+    margin: 1rem 0;
+  }
+
+  &__menu-item {
+    margin-right: 1rem;
+  }
+
+  &__paragraph {
+    font-size: 1.05rem;
+  }
+}

@@ -1,0 +1,26 @@
+.ticket {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(30, 30, 30, .7);
+  border-radius: 10px;
+  padding: 1rem;
+  margin: 1rem 0;
+
+  &__data-row {
+    width: auto;
+    margin-top: 1rem;
+
+    > * {
+      margin: .5rem 0;
+    }
+  }
+
+  .ticket__logo {
+    width: 3.5rem;
+    height: 2.5rem;
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+  }
+}

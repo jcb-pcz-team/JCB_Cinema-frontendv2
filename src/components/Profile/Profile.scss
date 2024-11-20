@@ -1,0 +1,39 @@
+@use "../../assets/styles/index" as i;
+
+.profile {
+  max-width: 50rem;
+  height: 100vh;
+
+  &__header {
+    color: i.$clr-white;
+    border-bottom: 1px solid rgba(255, 255, 255, .1);
+    padding-bottom: .5rem;
+  }
+
+  &__form {
+
+    > * {
+      margin: 1rem 0;
+    }
+  }
+
+  .label {
+    display: inline-block;
+    font-weight: 500;
+    color: i.$clr-white;
+    margin-bottom: .5rem;
+  }
+
+  &__input {
+    background: #1E1E1E;
+    border: none;
+  }
+
+  .password-restriction {
+    margin-top: 1rem;
+    list-style-type: circle;
+
+    &__item {
+    }
+  }
+}
