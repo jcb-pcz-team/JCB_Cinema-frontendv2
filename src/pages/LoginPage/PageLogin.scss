@@ -1,0 +1,31 @@
+@use "../../assets/styles/index" as i;
+
+.login-page {
+  width: 100%;
+  height: 100vh;
+  @include i.flex-center;
+  background-image: url("src/assets/images/backgorund-popcorn.png");
+
+  &__container {
+    @include i.flex-center;
+    flex-direction: column;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.50);
+    backdrop-filter: blur(5px);
+    padding: 1rem 1rem;
+
+    @include i.respond-to(desktop) {
+      max-width: 35rem;
+      padding: 2rem 4rem;
+    }
+
+    @include i.respond-to(large-desktop) {
+      max-width: 35rem;
+      padding: 2rem 4rem;
+    }
+  }
+
+  &__header {
+    margin-bottom: 1rem;
+  }
+}
