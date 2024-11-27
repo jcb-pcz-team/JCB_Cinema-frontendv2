@@ -1,7 +1,11 @@
+@use "../../assets/styles/index" as i;
+
 .input {
   width: 100%;
   border-radius: 5px;
   border: 1px solid #707070;
   background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(50px);
+  color: i.$clr-white;
   padding: .8em 1em;
 }
