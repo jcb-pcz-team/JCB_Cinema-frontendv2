@@ -129,11 +129,15 @@
     margin: 1rem 0;
 
     @include i.respond-to(desktop) {
+      flex-direction: column;
       justify-content: start;
     }
 
     @include i.respond-to(large-desktop) {
+      flex-direction: column;
+      align-items: start;
       justify-content: start;
+      row-gap: 1rem;
     }
 
     &-item {

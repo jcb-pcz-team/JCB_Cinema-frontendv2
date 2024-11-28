@@ -1,0 +1,163 @@
+@use '../../../../JCB_Cinema-frontendV2-last/src/assets/styles/index' as i;
+
+// movieSchedule.scss
+.schedule {
+  width: 1200px;
+  min-height: 100vh;
+  background-color: #000;
+  color: #fff;
+  padding: 1rem;
+
+  &__container {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  &__header {
+    margin-bottom: 2rem;
+  }
+
+  &__title {
+    font-size: 1.5rem;
+    font-weight: bold;
+
+    &-highlight {
+      color: i.$clr-yellow;
+    }
+  }
+
+  &__filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  &__days {
+    display: flex;
+    gap: 1rem;
+  }
+
+  &__day-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.875rem;
+    padding: 0.25rem;
+    transition: color 0.3s;
+
+    &:hover {
+      color: i.$clr-yellow;
+    }
+
+    &--active {
+      color: i.$clr-yellow;
+      font-weight: bold;
+    }
+  }
+
+  &__calendar-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 0.25rem;
+  }
+
+  &__select-group {
+    display: flex;
+    gap: 1rem;
+    margin-left: auto;
+  }
+
+  &__select {
+    background-color: #000;
+    border: 1px solid #374151;
+    border-radius: 0.25rem;
+    color: #fff;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+
+    &:focus {
+      outline: none;
+      border-color: i.$clr-yellow;
+    }
+  }
+
+  &__movie-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  &__empty-message {
+    text-align: center;
+    padding: 3rem 0;
+    color: #9ca3af;
+  }
+}
+
+.movie-card {
+  display: flex;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  &__poster {
+    flex-shrink: 0;
+    width: 202px;
+    height: 300px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background-color: #991b1b;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__content {
+    flex: 1;
+  }
+
+  &__title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+
+  &__info {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+  }
+
+  &__format {
+    margin-bottom: 0.5rem;
+  }
+
+  &__showtimes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &__time-btn {
+    background-color: i.$clr-yellow;
+    color: #000;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+
+    &:hover {
+      background-color: i.$clr-yellow;
+    }
+  }
+}

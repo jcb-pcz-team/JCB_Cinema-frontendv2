@@ -1,29 +1,76 @@
 import "./Movie.scss";
-import React, {useEffect, useState} from "react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { Button } from "../../components/Button/Button.tsx";
+import {MainLayout} from "../../layouts/MainLayout/MainLayout.tsx";
+
+interface Genre {
+    genreId: number;
+    genreName: string;
+}
+
+interface Movie {
+    movieId: number;
+    title: string;
+    description: string;
+    duration: number;
+    releaseDate: string;
+    genre: Genre;
+    posterURL: string;
+    release: string;
+}
 
 export const Movie: React.FC = () => {
-    const [isDesktop, setIsDesktop] = useState(window.innerWidth < 768);
+    const { movieId } = useParams<{ movieId: string }>();
+    const [movie, setMovie] = useState<Movie | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const handleResize = () => {
-            setIsDesktop(window.innerWidth < 768);
+        const fetchMovie = async () => {
+            try {
+                setIsLoading(true);
+                const response = await fetch(`https://localhost:7101/api/movies/${movieId}`);
+                if (!response.ok) {
+                    throw new Error("Failed to fetch movie data.");
+                }
+                const data: Movie = await response.json();
+                setMovie(data);
+            } catch (err: any) {
+                setError(err.message || "An unknown error occurred.");
+            } finally {
+                setIsLoading(false);
+            }
         };
 
-        window.addEventListener('resize', handleResize);
+        if (movieId) {
+            fetchMovie();
+        }
+    }, [movieId]);
 
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    if (isLoading) {
+        return <div>Loading movie details...</div>;
+    }
+
+    if (error) {
+        return <div>Error: {error}</div>;
+    }
+
+    if (!movie) {
+        return <div>No movie found.</div>;
+    }
 
     return (
+        <MainLayout>
         <section className="movie">
             <div className="movie__header">
-                <h2 className="movie__title header--secondary">Spider Man: No Way Home</h2>
+                <h2 className="movie__title header--secondary">{movie.title}</h2>
                 <Button className="button movie__button">
                     BUY TICKET
                 </Button>
             </div>
             <div className="movie__video">
+                {/* Replace with an actual trailer URL if available */}
                 <iframe
                     className="movie__video-frame"
                     width="350"
@@ -34,57 +81,30 @@ export const Movie: React.FC = () => {
                 ></iframe>
             </div>
             <div className="movie__content">
-                <div className="movie__infromation">
-                    <h3 className="movie__subtitle">MORE INFORMATION ABOUT Spider Man: No Way Home</h3>
-
+                <div className="movie__information">
                     <div className="movie__info">
                         <div className="movie__info-item">
-                        <   img className="movie__info-icon" src="src/assets/images/icon-clock.svg" alt="clock"/>
-                            <span className="movie__info-label">DURATION:</span>
-                            <p className="movie__info-text">2h 30min</p>
+                            <span className="movie__info-label paragraph--gray">DURATION:</span>
+                            <p className="movie__info-text paragraph">{movie.duration} minutes</p>
                         </div>
                         <div className="movie__info-item">
-                            <img className="movie__info-icon" src="src/assets/images/icon-carrier.svg" alt="carrier"/>
-                            <span className="movie__info-label">GENRE:</span>
-                            <p className="movie__info-text">ACTION</p>
+                            <span className="movie__info-label paragraph--gray">GENRE:</span>
+                            <p className="movie__info-text paragraph">{movie.genre.genreName}</p>
+                        </div>
+                        <div className="movie__info-item">
+                            <span className="movie__info-label paragraph--gray">FORMAT:</span>
+                            <p className="movie__info-text paragraph">{movie.releaseDate}</p>
                         </div>
                     </div>
-                    <p className="movie__description">
-                    For the first time in history, the identity of Spider-Man, our friendly neighborhood superhero, is
-                    revealed. He can no longer fulfill his superhero duties while leading a normal life. Moreover, he
-                    puts those he cares about most in danger.
-                    </p>
+                    <p className="movie__description paragraph">{movie.description}</p>
                 </div>
-
-                {isDesktop ?
-                    null
-                    :
-                    <img className="movie__background-image" src="src/assets/images/backgorund-spiderman.png"
-                         alt="Spider Man background"/>}
+                <img
+                    className="movie__background-image"
+                    src={`https://localhost:7101/api/${movie.posterURL}`}
+                    alt={movie.title}
+                />
             </div>
-            <dl className="movie__details">
-                <div className="movie__details-item">
-                    <dt className="movie__details-term">Title</dt>
-                    <dd className="movie__details-definition">Spider Man: No Way Home</dd>
-                </div>
-                <div className="movie__details-item">
-                    <dt className="movie__details-term">Genre</dt>
-                    <dd className="movie__details-definition">Action, Sci-Fi</dd>
-                </div>
-                <div className="movie__details-item">
-                    <dt className="movie__details-term">Age Restriction</dt>
-                    <dd className="movie__details-definition">13+</dd>
-                </div>
-                <div className="movie__details-item">
-                    <dt className="movie__details-term">Screening Type</dt>
-                    <dd className="movie__details-definition">2D, IMAX</dd>
-                </div>
-            </dl>
-
-            {isDesktop ?
-                <img className="movie__background-image" src="src/assets/images/backgorund-spiderman.png"
-                     alt="Spider Man background"/>               :
-                null }
         </section>
+        </MainLayout>
     );
 };
