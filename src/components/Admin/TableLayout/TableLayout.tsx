@@ -19,8 +19,8 @@ export const TableLayout: React.FC<TableLayoutProps> = ({
                                                             title,
                                                             children,
                                                             onSearch,
-                                                            onSort,
-                                                            sortOptions,
+                                                            // onSort,
+                                                            // sortOptions,
                                                             onAddNew
                                                         }) => {
     return (
@@ -46,17 +46,17 @@ export const TableLayout: React.FC<TableLayoutProps> = ({
                         className="filters__search"
                         onChange={(e) => onSearch(e.target.value)}
                     />
-                    <select
-                        className="filters__select"
-                        onChange={(e) => onSort(e.target.value)}
-                    >
-                        <option value="">Sort by...</option>
-                        {sortOptions.map(option => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
+                    {/*<select*/}
+                    {/*    className="filters__select"*/}
+                    {/*    onChange={(e) => onSort(e.target.value)}*/}
+                    {/*>*/}
+                    {/*    /!*<option value="">Sort by...</option>*!/*/}
+                    {/*    {sortOptions.map(option => (*/}
+                    {/*        <option key={option.value} value={option.value}>*/}
+                    {/*            {option.label}*/}
+                    {/*        </option>*/}
+                    {/*    ))}*/}
+                    {/*</select>*/}
                 </div>
             </div>
             {children}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FormikProps } from 'formik';
 import { Input } from '../Input/Input';
 import { Button } from '../Button/Button';
-import { useMutation } from '@tanstack/react-query';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 
 interface GeneralInfoValues {
     login: string;
@@ -32,6 +32,25 @@ const FORM_FIELDS: FormField[] = [
 
 export const GeneralInfoForm: React.FC<Props> = ({ formik, onUpdateSuccess }) => {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const queryClient = useQueryClient()
+
+    const { data: userData, isLoading } = useQuery({
+        queryKey: ['userData'],
+        queryFn: async () => {
+            const response = await fetch('https://localhost:7101/api/users', {
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch user data');
+            }
+
+            return response.json();
+        }
+    });
 
     const formatFieldLabel = (field: string): string => {
         return field.charAt(0).toUpperCase() +
@@ -40,14 +59,17 @@ export const GeneralInfoForm: React.FC<Props> = ({ formik, onUpdateSuccess }) =>
 
     const mutation = useMutation({
         mutationFn: async (values: GeneralInfoValues) => {
-            const url = new URL('https://localhost:7101/api/users');
+            const baseUrl = 'https://localhost:7101/api/users';
+            const params = new URLSearchParams();
+
             Object.entries(values).forEach(([key, value]) => {
                 if (value !== undefined && value !== null && value !== '') {
-                    url.searchParams.append(key, value.toString());
+                    const pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
+                    params.append(pascalKey, value.toString());
                 }
             });
 
-            const response = await fetch(url, {
+            const response = await fetch(`${baseUrl}?${params.toString()}`, {
                 method: 'PUT',
                 headers: {
                     'Accept': 'application/json',
@@ -56,20 +78,19 @@ export const GeneralInfoForm: React.FC<Props> = ({ formik, onUpdateSuccess }) =>
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to update profile');
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(errorText || 'Failed to update profile');
             }
 
-            return response.json();
+            return response.text() || null;
         },
         onSuccess: () => {
             setSuccessMessage('Profile updated successfully!');
-            onUpdateSuccess(); // Call the success callback
+            onUpdateSuccess();
+            queryClient.invalidateQueries({ queryKey: ['userData'] });
             setTimeout(() => setSuccessMessage(null), 3000);
         },
-        onError: (error: Error) => {
-            formik.setStatus(error.message);
-        }
     });
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -78,6 +99,23 @@ export const GeneralInfoForm: React.FC<Props> = ({ formik, onUpdateSuccess }) =>
             mutation.mutate(formik.values);
         }
     };
+
+    React.useEffect(() => {
+        if (userData) {
+            formik.setValues({
+                login: userData.login || '',
+                firstName: userData.firstName || '',
+                lastName: userData.lastName || '',
+                phoneNumber: userData.phoneNumber || '',
+                street: userData.street || '',
+                houseNumber: userData.houseNumber || ''
+            });
+        }
+    }, [userData]);
+
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
 
     return (
         <>

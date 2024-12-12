@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { TableLayout } from '../TableLayout/TableLayout';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { sortItems, type SortConfig } from '../../../utils/sorting.ts';
@@ -66,7 +66,6 @@ const api = {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error('Not authenticated');
 
-        // Build query parameters
         const url = new URL('https://localhost:7101/api/movies/add');
         url.searchParams.append('Title', data.title);
         url.searchParams.append('Description', data.description);
@@ -75,9 +74,6 @@ const api = {
         url.searchParams.append('Genre', data.genre);
         url.searchParams.append('PosterDescription', data.posterDescription);
 
-        console.log('Request URL:', url.toString());
-
-        // Create FormData for file upload
         const formData = new FormData();
         if (data.posterFile) {
             formData.append('PosterFile', data.posterFile);
@@ -92,11 +88,8 @@ const api = {
                 body: formData
             });
 
-            console.log('Response status:', response.status);
-            const responseText = await response.text();
-            console.log('Response text:', responseText);
-
             if (!response.ok) {
+                const responseText = await response.text();
                 if (responseText) {
                     try {
                         const errorData = JSON.parse(responseText);
@@ -114,22 +107,13 @@ const api = {
                 throw new Error('Failed to add movie');
             }
 
-            // Only try to parse JSON if we have content
-            if (responseText) {
-                try {
-                    return JSON.parse(responseText);
-                } catch (e) {
-                    console.log('Response was not JSON but operation might have succeeded');
-                    return { success: true };
-                }
-            }
-
             return { success: true };
         } catch (error) {
             console.error('API Error:', error);
             throw error;
         }
     },
+
     deleteMovie: async (id: number) => {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error('Not authenticated');
@@ -159,6 +143,7 @@ export const MovieManagement: React.FC = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [formData, setFormData] = useState<MovieCreateForm>(INITIAL_MOVIE_FORM);
     const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const queryClient = useQueryClient();
 
@@ -167,7 +152,18 @@ export const MovieManagement: React.FC = () => {
         queryFn: api.fetchMovies
     });
 
-    const sortedMovies = sortItems(movies, sortConfig);
+    const filteredMovies = useMemo(() => {
+        if (!searchTerm) return movies;
+
+        const searchStr = searchTerm.toLowerCase();
+        return movies.filter(movie =>
+            movie.title.toLowerCase().includes(searchStr) ||
+            movie.description.toLowerCase().includes(searchStr) ||
+            movie.genre.toLowerCase().includes(searchStr)
+        );
+    }, [movies, searchTerm]);
+
+    const sortedMovies = sortItems(filteredMovies, sortConfig);
 
     const handleSort = (sortKey: string) => {
         setSortConfig(current => {
@@ -181,17 +177,19 @@ export const MovieManagement: React.FC = () => {
         });
     };
 
+    const handleSearch = (term: string) => {
+        setSearchTerm(term);
+    };
+
     const addMovieMutation = useMutation({
         mutationFn: api.addMovie,
-        onSuccess: (data) => {
-            console.log('Mutation success:', data);
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['movies'] });
             setIsFormVisible(false);
             setFormData(INITIAL_MOVIE_FORM);
             alert('Movie added successfully!');
         },
         onError: (error: Error) => {
-            console.error('Mutation error:', error);
             alert(error.message);
         }
     });
@@ -203,7 +201,6 @@ export const MovieManagement: React.FC = () => {
             alert('Movie deleted successfully!');
         },
         onError: (error: Error) => {
-            console.error('Delete error:', error);
             alert(error.message);
         }
     });
@@ -216,7 +213,6 @@ export const MovieManagement: React.FC = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Submitting form data:', formData);
         addMovieMutation.mutate(formData);
     };
 
@@ -231,10 +227,9 @@ export const MovieManagement: React.FC = () => {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (files && files.length > 0) {
-            const file = files[0];
             setFormData(prev => ({
                 ...prev,
-                posterFile: file
+                posterFile: files[0]
             }));
         }
     };
@@ -245,11 +240,13 @@ export const MovieManagement: React.FC = () => {
     return (
         <TableLayout
             title="Movies Management"
-            onSearch={() => {}}
-            onSort={() => {}}
+            onSearch={handleSearch}
+            onSort={handleSort}
             sortOptions={[
                 { value: 'title', label: 'Title' },
-                { value: 'releaseDate', label: 'Release Date' }
+                { value: 'releaseDate', label: 'Release Date' },
+                { value: 'genre', label: 'Genre' },
+                { value: 'duration', label: 'Duration' }
             ]}
             onAddNew={() => setIsFormVisible(true)}
         >
@@ -358,19 +355,19 @@ export const MovieManagement: React.FC = () => {
 
                         <div className="form-buttons">
                             <button
-                                type="submit"
-                                className="button button--primary"
-                                disabled={addMovieMutation.isPending}
-                            >
-                                {addMovieMutation.isPending ? 'Adding...' : 'Add Movie'}
-                            </button>
-                            <button
                                 type="button"
                                 className="button button--secondary"
                                 onClick={() => setIsFormVisible(false)}
                                 disabled={addMovieMutation.isPending}
                             >
                                 Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="button button--primary"
+                                disabled={addMovieMutation.isPending}
+                            >
+                                {addMovieMutation.isPending ? 'Adding...' : 'Add Movie'}
                             </button>
                         </div>
                     </form>
@@ -381,20 +378,19 @@ export const MovieManagement: React.FC = () => {
                 <table className="admin-table">
                     <thead>
                     <tr>
-                        <th onClick={() => handleSort('title')} style={{cursor: 'pointer'}}>
+                        <th onClick={() => handleSort('title')}>
                             Title {sortConfig?.key === 'title' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('description')} style={{cursor: 'pointer'}}>
+                        <th onClick={() => handleSort('description')}>
                             Description {sortConfig?.key === 'description' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('duration')} style={{cursor: 'pointer'}}>
+                        <th onClick={() => handleSort('duration')}>
                             Duration {sortConfig?.key === 'duration' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('releaseDate')} style={{cursor: 'pointer'}}>
-                            Release
-                            Date {sortConfig?.key === 'releaseDate' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                        <th onClick={() => handleSort('releaseDate')}>
+                            Release Date {sortConfig?.key === 'releaseDate' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('genre')} style={{cursor: 'pointer'}}>
+                        <th onClick={() => handleSort('genre')}>
                             Genre {sortConfig?.key === 'genre' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                         </th>
                         <th>Actions</th>
@@ -410,11 +406,7 @@ export const MovieManagement: React.FC = () => {
                             <td>{movie.genre}</td>
                             <td>
                                 <div className="admin-table__actions">
-                                    <button
-                                        className="button button--edit"
-                                        // onClick={() => handleEdit(movie)}
-                                        // disabled={updateMovieMutation.isPending}
-                                    >
+                                    <button className="button button--edit">
                                         Edit
                                     </button>
                                     <button
@@ -428,6 +420,13 @@ export const MovieManagement: React.FC = () => {
                             </td>
                         </tr>
                     ))}
+                    {sortedMovies.length === 0 && (
+                        <tr>
+                            <td colSpan={7} style={{textAlign: 'center'}}>
+                                No movies found{searchTerm ? ` matching "${searchTerm}"` : ''}
+                            </td>
+                        </tr>
+                    )}
                     </tbody>
                 </table>
             </div>

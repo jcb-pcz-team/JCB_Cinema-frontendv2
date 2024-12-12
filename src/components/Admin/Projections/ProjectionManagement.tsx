@@ -1,9 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TableLayout } from "../TableLayout/TableLayout";
+import { useQuery } from '@tanstack/react-query';
+import { sortItems, type SortConfig } from '../../../utils/sorting.ts';
 
-interface SortOption {
-    value: string;
-    label: string;
+interface Genre {
+    genreId: number;
+    genreName: string;
+}
+
+interface Movie {
+    movieId: number;
+    title: string;
+    description: string;
+    duration: number;
+    releaseDate: string;
+    genre: Genre;
+    normalizedTitle: string;
+    release: string;
+}
+
+interface CinemaHall {
+    cinemaHallId: number;
+    name: string;
+}
+
+interface Price {
+    ammount: number;
+    currency: string;
+}
+
+interface ProjectionResponse {
+    movie: Movie;
+    screeningTime: string;
+    screenType: string;
+    cinemaHall: CinemaHall;
+    normalizedMovieTitle: string;
+    price: Price;
+    occupiedSeats: number;
+    availableSeats: number;
 }
 
 interface Projection {
@@ -25,37 +59,88 @@ const INITIAL_PROJECTION_FORM: Omit<Projection, 'id'> = {
     availableSeats: 0
 };
 
-export const ProjectionManagement = () => {
-    const [projections, setProjections] = useState<Projection[]>([
-        {
-            id: 1,
-            movie: 'Inception',
-            hall: 'Hall 1',
-            date: '2024-03-20',
-            time: '18:00',
-            type: '3D',
-            availableSeats: 120
+const fetchProjections = async (): Promise<Projection[]> => {
+    const token = localStorage.getItem('authToken');
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch('https://localhost:7101/api/moviesprojection', {
+        headers: {
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`
         }
-    ]);
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to fetch projections');
+    }
+
+    const data: ProjectionResponse[] = await response.json();
+
+    return data.map((item, index) => {
+        const screeningDateTime = new Date(item.screeningTime);
+        const date = screeningDateTime.toISOString().split('T')[0];
+        const time = screeningDateTime.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        return {
+            id: index,
+            movie: item.movie.title,
+            hall: item.cinemaHall.name,
+            date: date,
+            time: time,
+            type: item.screenType,
+            availableSeats: item.availableSeats
+        };
+    });
+};
+
+export const ProjectionManagement = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [formData, setFormData] = useState(INITIAL_PROJECTION_FORM);
+    const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
-    const sortOptions: SortOption[] = [
-        { value: 'movie', label: 'Movie' },
-        { value: 'hall', label: 'Hall' },
-        { value: 'date', label: 'Date' },
-        { value: 'time', label: 'Time' },
-        { value: 'type', label: 'Type' },
-        { value: 'availableSeats', label: 'Available Seats' }
-    ];
+    const { data: projections = [], isLoading, isError, error, refetch } = useQuery({
+        queryKey: ['projections'],
+        queryFn: fetchProjections,
+    });
 
-    const handleSearch = (searchTerm: string) => {
-        console.log('Searching projections:', searchTerm);
+    const filteredProjections = useMemo(() => {
+        if (!searchTerm) return projections;
+
+        return projections.filter(projection => {
+            const searchStr = searchTerm.toLowerCase();
+            return (
+                projection.movie.toLowerCase().includes(searchStr) ||
+                projection.hall.toLowerCase().includes(searchStr) ||
+                projection.date.includes(searchStr) ||
+                projection.time.toLowerCase().includes(searchStr) ||
+                projection.type.toLowerCase().includes(searchStr) ||
+                projection.availableSeats.toString().includes(searchStr)
+            );
+        });
+    }, [projections, searchTerm]);
+
+    const sortedProjections = sortItems(filteredProjections, sortConfig);
+
+    const handleSort = (sortKey: string) => {
+        setSortConfig(current => {
+            if (!current || current.key !== sortKey) {
+                return { key: sortKey, direction: 'asc' };
+            }
+            if (current.direction === 'asc') {
+                return { key: sortKey, direction: 'desc' };
+            }
+            return null;
+        });
     };
 
-    const handleSort = (sortBy: string) => {
-        console.log('Sorting projections by:', sortBy);
+    const handleSearch = (term: string) => {
+        setSearchTerm(term);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -66,20 +151,15 @@ export const ProjectionManagement = () => {
         }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (editingId) {
-            setProjections(prev => prev.map(projection =>
-                projection.id === editingId ? { ...formData, id: editingId } : projection
-            ));
+            console.log('Editing projection:', { ...formData, id: editingId });
         } else {
-            const newProjection = {
-                ...formData,
-                id: projections.length + 1
-            };
-            setProjections(prev => [...prev, newProjection]);
+            console.log('Creating new projection:', formData);
         }
         handleCloseForm();
+        refetch();
     };
 
     const handleEdit = (projection: Projection) => {
@@ -88,8 +168,11 @@ export const ProjectionManagement = () => {
         setIsFormVisible(true);
     };
 
-    const handleDelete = (id: number) => {
-        setProjections(prev => prev.filter(projection => projection.id !== id));
+    const handleDelete = async (id: number) => {
+        if (window.confirm('Are you sure you want to delete this projection?')) {
+            console.log('Deleting projection:', id);
+            await refetch();
+        }
     };
 
     const handleCloseForm = () => {
@@ -102,12 +185,27 @@ export const ProjectionManagement = () => {
         setIsFormVisible(true);
     };
 
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
+
+    if (isError) {
+        return <div>Error: {(error as Error).message}</div>;
+    }
+
     return (
         <TableLayout
             title="Movie Projections Management"
             onSearch={handleSearch}
             onSort={handleSort}
-            sortOptions={sortOptions}
+            sortOptions={[
+                { value: 'movie', label: 'Movie' },
+                { value: 'hall', label: 'Hall' },
+                { value: 'date', label: 'Date' },
+                { value: 'time', label: 'Time' },
+                { value: 'type', label: 'Type' },
+                { value: 'availableSeats', label: 'Available Seats' }
+            ]}
             onAddNew={handleAddNew}
         >
             {isFormVisible && (
@@ -125,8 +223,11 @@ export const ProjectionManagement = () => {
                                     required
                                 >
                                     <option value="">Select movie</option>
-                                    <option value="Inception">Inception</option>
-                                    <option value="The Godfather">The Godfather</option>
+                                    {Array.from(new Set(projections.map(p => p.movie))).map(movie => (
+                                        <option key={movie} value={movie}>
+                                            {movie}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
 
@@ -140,8 +241,11 @@ export const ProjectionManagement = () => {
                                     required
                                 >
                                     <option value="">Select hall</option>
-                                    <option value="Hall 1">Hall 1</option>
-                                    <option value="Hall 2">Hall 2</option>
+                                    {Array.from(new Set(projections.map(p => p.hall))).map(hall => (
+                                        <option key={hall} value={hall}>
+                                            {hall}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
 
@@ -179,9 +283,11 @@ export const ProjectionManagement = () => {
                                     required
                                 >
                                     <option value="">Select type</option>
-                                    <option value="2D">2D</option>
-                                    <option value="3D">3D</option>
-                                    <option value="IMAX">IMAX</option>
+                                    {Array.from(new Set(projections.map(p => p.type))).map(type => (
+                                        <option key={type} value={type}>
+                                            {type}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
 
@@ -191,6 +297,7 @@ export const ProjectionManagement = () => {
                                     id="availableSeats"
                                     name="availableSeats"
                                     type="number"
+                                    min="0"
                                     value={formData.availableSeats}
                                     onChange={handleInputChange}
                                     required
@@ -217,17 +324,29 @@ export const ProjectionManagement = () => {
             <table className="admin-table">
                 <thead>
                 <tr>
-                    <th>Movie</th>
-                    <th>Hall</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Type</th>
-                    <th>Available Seats</th>
+                    <th onClick={() => handleSort('movie')} style={{cursor: 'pointer'}}>
+                        Movie {sortConfig?.key === 'movie' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th onClick={() => handleSort('hall')} style={{cursor: 'pointer'}}>
+                        Hall {sortConfig?.key === 'hall' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th onClick={() => handleSort('date')} style={{cursor: 'pointer'}}>
+                        Date {sortConfig?.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th onClick={() => handleSort('time')} style={{cursor: 'pointer'}}>
+                        Time {sortConfig?.key === 'time' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th onClick={() => handleSort('type')} style={{cursor: 'pointer'}}>
+                        Type {sortConfig?.key === 'type' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th onClick={() => handleSort('availableSeats')} style={{cursor: 'pointer'}}>
+                        Available Seats {sortConfig?.key === 'availableSeats' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
                     <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
-                {projections.map((projection) => (
+                {sortedProjections.map((projection) => (
                     <tr key={projection.id}>
                         <td>{projection.movie}</td>
                         <td>{projection.hall}</td>
@@ -253,6 +372,13 @@ export const ProjectionManagement = () => {
                         </td>
                     </tr>
                 ))}
+                {sortedProjections.length === 0 && (
+                    <tr>
+                        <td colSpan={7} style={{ textAlign: 'center' }}>
+                            No projections found{searchTerm ? ` matching "${searchTerm}"` : ''}
+                        </td>
+                    </tr>
+                )}
                 </tbody>
             </table>
         </TableLayout>
