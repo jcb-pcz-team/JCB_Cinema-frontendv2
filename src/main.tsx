@@ -47,8 +47,7 @@ const router = createBrowserRouter([
             {
                 path: "tickets",
                 element: <Tickets />,
-            },
-        ],
+            },],
     },
 ]);
 
