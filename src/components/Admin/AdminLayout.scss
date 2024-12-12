@@ -1,0 +1,52 @@
+.admin-layout {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.admin-sidebar {
+  background-color: #1a1a1a;
+  color: white;
+  padding: 1rem;
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    border-bottom: 1px solid #333;
+    margin-bottom: 1rem;
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+  }
+
+  &__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  &__link {
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    color: #fff;
+    text-decoration: none;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #333;
+    }
+
+    &--active {
+      background-color: #0066cc;
+    }
+  }
+}
+
+.admin-content {
+  padding: 2rem;
+}
