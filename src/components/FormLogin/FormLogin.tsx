@@ -10,6 +10,26 @@ import {useNavigate} from "react-router-dom";
 interface ServerErrorResponse {
     message?: string;
 }
+//
+// interface LoginResponse {
+//     token: string;
+//     role: string;
+//     userName: string;
+// }
+
+const decodeToken = (token: string) => {
+    try {
+        const payload = token.split('.')[1];
+        const decodedPayload = JSON.parse(atob(payload));
+        return {
+            role: decodedPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || decodedPayload.role,
+            userName: decodedPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/name"] || decodedPayload.name
+        };
+    } catch (error) {
+        console.error('Error decoding token:', error);
+        return null;
+    }
+};
 
 export const FormLogin = () => {
     const [loginError, setLoginError] = useState<string | null>(null);
@@ -68,11 +88,24 @@ export const FormLogin = () => {
                 });
 
                 const token = response.data;
-                localStorage.setItem('authToken', token);
-                localStorage.setItem("userName", values.username);
-                axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                const decodedToken = decodeToken(token);
+                    console.log('Token payload:', JSON.parse(atob(token.split('.')[1])));
 
-                navigate('/');
+                if (decodedToken) {
+                    localStorage.setItem('authToken', token);
+                    localStorage.setItem('userRole', decodedToken.role);
+                    localStorage.setItem('userName', values.username);
+                    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+                    // Przekierowanie w zależności od roli
+                    if (decodedToken.role === 'Admin') {
+                        navigate('/admin/movies');
+                    } else {
+                        navigate('/');
+                    }
+                } else {
+                    setLoginError('Invalid token received');
+                }
 
             } catch (error) {
                 if (error instanceof AxiosError) {
