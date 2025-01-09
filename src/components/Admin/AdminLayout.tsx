@@ -8,10 +8,9 @@ export const AdminLayout = () => {
         { path: '/admin/halls', label: 'Cinema Halls' },
         { path: '/admin/schedules', label: 'Schedules' },
         { path: '/admin/users', label: 'Users' },
-        { path: '/admin/tickets', label: 'Booking Tickets' },
+        // { path: '/admin/tickets', label: 'Booking Tickets' },
     ];
 
-    // Funkcja obsługująca wylogowanie
     const handleLogout = () => {
         localStorage.removeItem('authToken');
         localStorage.removeItem('userName');

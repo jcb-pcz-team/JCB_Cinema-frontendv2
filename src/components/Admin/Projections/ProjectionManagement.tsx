@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { TableLayout } from "../TableLayout/TableLayout";
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { sortItems, type SortConfig } from '../../../utils/sorting.ts';
 
 interface Genre {
@@ -40,6 +40,14 @@ interface ProjectionResponse {
     availableSeats: number;
 }
 
+interface ApiValidationError {
+    type: string;
+    title: string;
+    status: number;
+    errors: Record<string, string[]>;
+    traceId: string;
+}
+
 interface Projection {
     id: number;
     movie: string;
@@ -48,6 +56,8 @@ interface Projection {
     time: string;
     type: string;
     availableSeats: number;
+    normalizedMovieTitle: string;
+    cinemaHallId: number;
 }
 
 const INITIAL_PROJECTION_FORM: Omit<Projection, 'id'> = {
@@ -56,7 +66,27 @@ const INITIAL_PROJECTION_FORM: Omit<Projection, 'id'> = {
     date: '',
     time: '',
     type: '',
-    availableSeats: 0
+    availableSeats: 0,
+    normalizedMovieTitle: '',
+    cinemaHallId: 0
+};
+
+const fetchMovies = async (): Promise<Movie[]> => {
+    const token = localStorage.getItem('authToken');
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch('https://localhost:7101/api/movies', {
+        headers: {
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch movies');
+    }
+
+    return response.json();
 };
 
 const fetchProjections = async (): Promise<Projection[]> => {
@@ -92,9 +122,62 @@ const fetchProjections = async (): Promise<Projection[]> => {
             date: date,
             time: time,
             type: item.screenType,
-            availableSeats: item.availableSeats
+            availableSeats: item.availableSeats,
+            normalizedMovieTitle: item.normalizedMovieTitle,
+            cinemaHallId: item.cinemaHall.cinemaHallId
         };
     });
+};
+
+const api = {
+    addProjection: async (projectionData: {
+        screeningTime: string;
+        screenType: string;
+        cinemaHallId: number;
+        movieNormalizedTitle: string;  // Ensure correct casing
+    }) => {
+        const token = localStorage.getItem('authToken');
+        if (!token) throw new Error('Not authenticated');
+
+        try {
+            // Convert the data to match API expectations
+            const apiData = {
+                screeningTime: projectionData.screeningTime,
+                screenType: projectionData.screenType,
+                cinemaHallId: projectionData.cinemaHallId,
+                movieNormalizedTitle: projectionData.movieNormalizedTitle // Ensure correct casing
+            };
+
+            console.log('Sending data to API:', JSON.stringify(apiData, null, 2));
+
+            const response = await fetch('https://localhost:7101/api/moviesprojection', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(apiData)
+            });
+
+            const responseData = await response.json() as ApiValidationError;
+            console.log('API Response:', responseData);
+
+            if (!response.ok) {
+                if (responseData.errors && typeof responseData.errors === 'object') {
+                    const validationErrors = Object.entries(responseData.errors)
+                        .map(([field, errors]) => `${field}: ${(errors as string[]).join(', ')}`)
+                        .join('\n');
+                    throw new Error(`Validation errors:\n${validationErrors}`);
+                }
+                throw new Error(responseData.title || 'Failed to add projection');
+            }
+
+            return responseData;
+        } catch (error) {
+            console.error('API Error details:', error);
+            throw error;
+        }
+    }
 };
 
 export const ProjectionManagement = () => {
@@ -103,6 +186,11 @@ export const ProjectionManagement = () => {
     const [formData, setFormData] = useState(INITIAL_PROJECTION_FORM);
     const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+
+    const { data: movies = [] } = useQuery({
+        queryKey: ['movies'],
+        queryFn: fetchMovies,
+    });
 
     const { data: projections = [], isLoading, isError, error, refetch } = useQuery({
         queryKey: ['projections'],
@@ -156,10 +244,39 @@ export const ProjectionManagement = () => {
         if (editingId) {
             console.log('Editing projection:', { ...formData, id: editingId });
         } else {
-            console.log('Creating new projection:', formData);
+            try {
+                const selectedMovie = movies.find(m => m.title === formData.movie);
+                const hall = projections.find(p => p.hall === formData.hall);
+
+                if (!selectedMovie || !hall) {
+                    alert('Invalid movie or hall selection');
+                    return;
+                }
+
+                const localDate = new Date(`${formData.date}T${formData.time}`);
+                const utcDate = new Date(Date.UTC(
+                    localDate.getFullYear(),
+                    localDate.getMonth(),
+                    localDate.getDate(),
+                    localDate.getHours(),
+                    localDate.getMinutes()
+                ));
+
+                // Ensure correct field names and casing
+                const projectionData = {
+                    screeningTime: utcDate.toISOString(),
+                    screenType: formData.type,
+                    cinemaHallId: hall.cinemaHallId,
+                    movieNormalizedTitle: selectedMovie.normalizedTitle // Ensure correct casing
+                };
+
+                console.log('Prepared projection data:', projectionData);
+                addProjectionMutation.mutate(projectionData);
+            } catch (error) {
+                console.error('Form submission error:', error);
+                alert('Error preparing projection data. Check console for details.');
+            }
         }
-        handleCloseForm();
-        refetch();
     };
 
     const handleEdit = (projection: Projection) => {
@@ -174,6 +291,20 @@ export const ProjectionManagement = () => {
             await refetch();
         }
     };
+
+    const addProjectionMutation = useMutation({
+        mutationFn: api.addProjection,
+        onSuccess: (data) => {
+            console.log('Mutation success response:', data);
+            refetch();
+            handleCloseForm();
+            alert('Projection added successfully!');
+        },
+        onError: (error: Error) => {
+            console.error('Mutation error:', error);
+            alert(error.message);
+        }
+    });
 
     const handleCloseForm = () => {
         setFormData(INITIAL_PROJECTION_FORM);
@@ -223,9 +354,9 @@ export const ProjectionManagement = () => {
                                     required
                                 >
                                     <option value="">Select movie</option>
-                                    {Array.from(new Set(projections.map(p => p.movie))).map(movie => (
-                                        <option key={movie} value={movie}>
-                                            {movie}
+                                    {movies.map(movie => (
+                                        <option key={movie.movieId} value={movie.title}>
+                                            {movie.title}
                                         </option>
                                     ))}
                                 </select>

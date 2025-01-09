@@ -13,10 +13,11 @@ export interface InputProps {
 }
 
 export interface ButtonProps {
-    type?: "submit" | "reset" | "button";
-    children: React.ReactNode | string;
-    className: string;
+    type?: "button" | "submit" | "reset";
+    children: React.ReactNode;
+    className?: string;
     disabled?: boolean;
+    onClick?: () => void;  // Dodajemy obsługę onClick
 }
 
 export interface UserData {

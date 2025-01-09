@@ -2,8 +2,10 @@ import './Home.scss';
 import React, { useState, useEffect } from "react";
 import { Button } from "../../components/Button/Button";
 import { moviesData } from "../../data/moviesData";
+import { useNavigate } from 'react-router-dom';
 
 export const Home: React.FC = () => {
+    const navigate = useNavigate();
     const [movieIndex, setMovieIndex] = useState(0);
     const [currentMovie, setCurrentMovie] = useState(moviesData[movieIndex]);
     const [fade, setFade] = useState(false);
@@ -31,6 +33,20 @@ export const Home: React.FC = () => {
                 setFade(false);
             }, 100);
         }
+    };
+
+    const getNormalizedTitle = (title: string) => {
+        return title
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    };
+
+    const handleSeeMore = () => {
+        const normalizedTitle = getNormalizedTitle(currentMovie.title);
+        console.log('Navigating to movie:', normalizedTitle);
+        navigate(`/movies/${normalizedTitle}`);
     };
 
     return (
@@ -62,7 +78,7 @@ export const Home: React.FC = () => {
                     {currentMovie.description}
                 </p>
                 <div className="buttons-container">
-                    <Button className="button">SEE MORE</Button>
+                    <Button className="button" onClick={handleSeeMore}>SEE MORE</Button>
                     <Button className="button--white">BUY TICKET</Button>
                 </div>
             </div>

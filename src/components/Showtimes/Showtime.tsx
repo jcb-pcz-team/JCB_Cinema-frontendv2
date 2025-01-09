@@ -83,7 +83,20 @@ export const Showtime: React.FC = () => {
                 Wed: ["12:00", "15:00", "18:00"],
             },
             poster: "https://lumiere-a.akamaihd.net/v1/images/image_b97b56f3.jpeg?region=0,0,540,810"
-        }
+        },
+        {
+            id: 4,
+            title: "Interstellar",
+            genre: ["Sci-Fi"],
+            duration: "169 min",
+            format: "2D",
+            showtimes: {
+                Mon: ["12:00", "14:00", "15:00", "21:00"],
+                Tue: ["13:00", "16:00", "19:00"],
+                Wed: ["12:00", "15:00", "21:00"],
+            },
+            poster: "src/assets/images/background-interstellar.png"
+        },
     ];
 
     const filteredMovies = moviesData.filter(movie => {
@@ -104,6 +117,14 @@ export const Showtime: React.FC = () => {
 
     const handleGenreSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedGenre(event.target.value as Genre);
+    };
+
+    const getNormalizedTitle = (title: string) => {
+        return title
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')  // zamienia wszystkie znaki specjalne i spacje na myślnik
+            .replace(/-+/g, '-')          // zamienia wielokrotne myślniki na pojedynczy
+            .replace(/^-+|-+$/g, '');     // usuwa myślniki z początku i końca
     };
 
     return (
@@ -181,8 +202,8 @@ export const Showtime: React.FC = () => {
                         filteredMovies.map((movie) => (
                             <div key={movie.id} className="movie-card">
                                 <div className="movie-card__poster">
-                                    <Link to={`/movies/${movie.title}`}>
-                                        <img src={movie.poster} alt={movie.title} />
+                                    <Link to={`/movies/${getNormalizedTitle(movie.title)}`}>
+                                        <img src={movie.poster} alt={movie.title}/>
                                     </Link>
                                 </div>
                                 <div className="movie-card__content">

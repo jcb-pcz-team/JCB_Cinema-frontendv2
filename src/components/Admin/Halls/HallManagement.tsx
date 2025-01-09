@@ -1,87 +1,124 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { TableLayout } from "../TableLayout/TableLayout";
+import { useQuery } from "@tanstack/react-query";
 
-interface SortOption {
-    value: string;
-    label: string;
+interface SortConfig {
+    key: string;
+    direction: 'asc' | 'desc';
 }
 
 interface Hall {
     id: number;
     name: string;
-    capacity: number;
-    type: string;
-    status: string;
-    facilities: string;
+}
+
+interface HallResponse {
+    cinemaHallId: number;
+    name: string;
 }
 
 const INITIAL_HALL_FORM: Omit<Hall, 'id'> = {
-    name: '',
-    capacity: 0,
-    type: '',
-    status: '',
-    facilities: ''
+    name: ''
+};
+
+const sortItems = <T extends Record<string, any>>(
+    items: T[],
+    config: SortConfig | null
+): T[] => {
+    if (!config) return items;
+
+    return [...items].sort((a, b) => {
+        const aValue = a[config.key];
+        const bValue = b[config.key];
+
+        if (aValue === bValue) return 0;
+
+        const multiplier = config.direction === 'asc' ? 1 : -1;
+        return String(aValue).localeCompare(String(bValue)) * multiplier;
+    });
+};
+
+const api = {
+    fetchHalls: async () => {
+        const token = localStorage.getItem('authToken');
+        if (!token) throw new Error('Not authenticated');
+
+        const response = await fetch('https://localhost:7101/api/cinemahalls', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch halls');
+
+        const data: HallResponse[] = await response.json();
+        return data.map(hall => ({
+            id: hall.cinemaHallId,
+            name: hall.name
+        }));
+    }
 };
 
 export const HallManagement = () => {
-    const [halls, setHalls] = useState<Hall[]>([
-        {
-            id: 1,
-            name: 'Hall 1',
-            capacity: 150,
-            type: '3D',
-            status: 'Active',
-            facilities: 'Wheelchair access'
-        },
-        {
-            id: 2,
-            name: 'Hall 2',
-            capacity: 200,
-            type: 'IMAX',
-            status: 'Active',
-            facilities: 'VIP seats'
-        },
-    ]);
-
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [formData, setFormData] = useState(INITIAL_HALL_FORM);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
 
-    const sortOptions: SortOption[] = [
-        { value: 'name', label: 'Name' },
-        { value: 'capacity', label: 'Capacity' },
-        { value: 'type', label: 'Type' },
-        { value: 'status', label: 'Status' }
+    const { data: halls = [], isLoading, error } = useQuery({
+        queryKey: ['halls'],
+        queryFn: api.fetchHalls
+    });
+
+    const filteredHalls = useMemo(() => {
+        if (!searchTerm) return halls;
+
+        const searchStr = searchTerm.toLowerCase();
+        return halls.filter(hall =>
+            hall.name.toLowerCase().includes(searchStr)
+        );
+    }, [halls, searchTerm]);
+
+    const sortedHalls = useMemo(() =>
+            sortItems(filteredHalls, sortConfig),
+        [filteredHalls, sortConfig]
+    );
+
+    const sortOptions = [
+        { value: 'name', label: 'Name' }
     ];
 
     const handleSearch = (searchTerm: string) => {
-        console.log('Searching halls:', searchTerm);
+        setSearchTerm(searchTerm);
     };
 
-    const handleSort = (sortBy: string) => {
-        console.log('Sorting halls by:', sortBy);
+    const handleSort = (sortKey: string) => {
+        setSortConfig((current: SortConfig | null) => {
+            if (!current || current.key !== sortKey) {
+                return { key: sortKey, direction: 'asc' };
+            }
+            if (current.direction === 'asc') {
+                return { key: sortKey, direction: 'desc' };
+            }
+            return null;
+        });
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: name === 'capacity' ? parseInt(value) : value
+            [name]: value
         }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingId) {
-            setHalls(prev => prev.map(hall =>
-                hall.id === editingId ? { ...formData, id: editingId } : hall
-            ));
+            console.log('Updating hall:', editingId, formData);
         } else {
-            const newHall = {
-                ...formData,
-                id: halls.length + 1
-            };
-            setHalls(prev => [...prev, newHall]);
+            console.log('Adding new hall:', formData);
         }
         handleCloseForm();
     };
@@ -93,7 +130,7 @@ export const HallManagement = () => {
     };
 
     const handleDelete = (id: number) => {
-        setHalls(prev => prev.filter(hall => hall.id !== id));
+        console.log('Deleting hall:', id);
     };
 
     const handleCloseForm = () => {
@@ -105,6 +142,9 @@ export const HallManagement = () => {
     const handleAddNew = () => {
         setIsFormVisible(true);
     };
+
+    if (isLoading) return <div>Loading...</div>;
+    if (error) return <div>Error: {(error as Error).message}</div>;
 
     return (
         <TableLayout
@@ -130,62 +170,6 @@ export const HallManagement = () => {
                                     required
                                 />
                             </div>
-
-                            <div className="form-group">
-                                <label htmlFor="capacity">Capacity</label>
-                                <input
-                                    id="capacity"
-                                    name="capacity"
-                                    type="number"
-                                    value={formData.capacity}
-                                    onChange={handleInputChange}
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="type">Type</label>
-                                <select
-                                    id="type"
-                                    name="type"
-                                    value={formData.type}
-                                    onChange={handleInputChange}
-                                    required
-                                >
-                                    <option value="">Select type</option>
-                                    <option value="2D">2D</option>
-                                    <option value="3D">3D</option>
-                                    <option value="IMAX">IMAX</option>
-                                </select>
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="status">Status</label>
-                                <select
-                                    id="status"
-                                    name="status"
-                                    value={formData.status}
-                                    onChange={handleInputChange}
-                                    required
-                                >
-                                    <option value="">Select status</option>
-                                    <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
-                                    <option value="Maintenance">Maintenance</option>
-                                </select>
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="facilities">Facilities</label>
-                                <input
-                                    id="facilities"
-                                    name="facilities"
-                                    type="text"
-                                    value={formData.facilities}
-                                    onChange={handleInputChange}
-                                    required
-                                />
-                            </div>
                         </div>
 
                         <div className="form-buttons">
@@ -207,22 +191,16 @@ export const HallManagement = () => {
             <table className="admin-table">
                 <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Capacity</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Facilities</th>
+                    <th onClick={() => handleSort('name')}>
+                        Name {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
                     <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
-                {halls.map((hall) => (
+                {sortedHalls.map((hall) => (
                     <tr key={hall.id}>
                         <td>{hall.name}</td>
-                        <td>{hall.capacity}</td>
-                        <td>{hall.type}</td>
-                        <td>{hall.status}</td>
-                        <td>{hall.facilities}</td>
                         <td>
                             <div className="admin-table__actions">
                                 <button
@@ -241,6 +219,13 @@ export const HallManagement = () => {
                         </td>
                     </tr>
                 ))}
+                {sortedHalls.length === 0 && (
+                    <tr>
+                        <td colSpan={2} style={{textAlign: 'center'}}>
+                            No halls found{searchTerm ? ` matching "${searchTerm}"` : ''}
+                        </td>
+                    </tr>
+                )}
                 </tbody>
             </table>
         </TableLayout>

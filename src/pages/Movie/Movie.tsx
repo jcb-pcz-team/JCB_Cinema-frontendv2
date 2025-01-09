@@ -1,8 +1,8 @@
 import "./Movie.scss";
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Button } from "../../components/Button/Button.tsx";
-import {MainLayout} from "../../layouts/MainLayout/MainLayout.tsx";
+import { Button } from "../../components/Button/Button";
+import { MainLayout } from "../../layouts/MainLayout/MainLayout";
 
 interface Genre {
     genreId: number;
@@ -10,7 +10,6 @@ interface Genre {
 }
 
 interface Movie {
-    movieId: number;
     title: string;
     description: string;
     duration: number;
@@ -21,7 +20,7 @@ interface Movie {
 }
 
 export const Movie: React.FC = () => {
-    const { movieId } = useParams<{ movieId: string }>();
+    const { title } = useParams<{ title: string }>();
     const [movie, setMovie] = useState<Movie | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -30,7 +29,7 @@ export const Movie: React.FC = () => {
         const fetchMovie = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch(`https://localhost:7101/api/movies/${movieId}`);
+                const response = await fetch(`https://localhost:7101/api/movies/${encodeURIComponent(title || '')}`);
                 if (!response.ok) {
                     throw new Error("Failed to fetch movie data.");
                 }
@@ -43,10 +42,10 @@ export const Movie: React.FC = () => {
             }
         };
 
-        if (movieId) {
+        if (title) {
             fetchMovie();
         }
-    }, [movieId]);
+    }, [title]);
 
     if (isLoading) {
         return <div>Loading movie details...</div>;
@@ -62,49 +61,48 @@ export const Movie: React.FC = () => {
 
     return (
         <MainLayout>
-        <section className="movie">
-            <div className="movie__header">
-                <h2 className="movie__title header--secondary">{movie.title}</h2>
-                <Button className="button movie__button">
-                    BUY TICKET
-                </Button>
-            </div>
-            <div className="movie__video">
-                {/* Replace with an actual trailer URL if available */}
-                <iframe
-                    className="movie__video-frame"
-                    width="350"
-                    height="215"
-                    src="https://www.youtube.com/embed/JfVOs4VSpmA"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                ></iframe>
-            </div>
-            <div className="movie__content">
-                <div className="movie__information">
-                    <div className="movie__info">
-                        <div className="movie__info-item">
-                            <span className="movie__info-label paragraph--gray">DURATION:</span>
-                            <p className="movie__info-text paragraph">{movie.duration} minutes</p>
-                        </div>
-                        <div className="movie__info-item">
-                            <span className="movie__info-label paragraph--gray">GENRE:</span>
-                            <p className="movie__info-text paragraph">{movie.genre.genreName}</p>
-                        </div>
-                        <div className="movie__info-item">
-                            <span className="movie__info-label paragraph--gray">FORMAT:</span>
-                            <p className="movie__info-text paragraph">{movie.releaseDate}</p>
-                        </div>
-                    </div>
-                    <p className="movie__description paragraph">{movie.description}</p>
+            <section className="movie">
+                <div className="movie__header">
+                    <h2 className="movie__title header--secondary">{movie.title}</h2>
+                    <Button className="button movie__button">
+                        BUY TICKET
+                    </Button>
                 </div>
-                <img
-                    className="movie__background-image"
-                    src={`https://localhost:7101/api/${movie.posterURL}`}
-                    alt={movie.title}
-                />
-            </div>
-        </section>
+                <div className="movie__video">
+                    <iframe
+                        className="movie__video-frame"
+                        width="350"
+                        height="215"
+                        src="https://www.youtube.com/embed/JfVOs4VSpmA"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                    ></iframe>
+                </div>
+                <div className="movie__content">
+                    <div className="movie__information">
+                        <div className="movie__info">
+                            <div className="movie__info-item">
+                                <span className="movie__info-label paragraph--gray">DURATION:</span>
+                                <p className="movie__info-text paragraph">{movie.duration} minutes</p>
+                            </div>
+                            <div className="movie__info-item">
+                                <span className="movie__info-label paragraph--gray">GENRE:</span>
+                                <p className="movie__info-text paragraph">{movie.genre.genreName}</p>
+                            </div>
+                            <div className="movie__info-item">
+                                <span className="movie__info-label paragraph--gray">RELEASE DATE:</span>
+                                <p className="movie__info-text paragraph">{movie.releaseDate}</p>
+                            </div>
+                        </div>
+                        <p className="movie__description paragraph">{movie.description}</p>
+                    </div>
+                    <img
+                        className="movie__background-image"
+                        src={`https://localhost:7101/api/${movie.posterURL}`}
+                        alt={movie.title}
+                    />
+                </div>
+            </section>
         </MainLayout>
     );
 };

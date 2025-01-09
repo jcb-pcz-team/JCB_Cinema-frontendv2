@@ -1,0 +1,112 @@
+.user-management {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+
+  .search-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    h2 {
+      margin-bottom: 1rem;
+    }
+  }
+
+  .search-form {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+
+    .form-group {
+      flex: 1;
+    }
+  }
+
+  .user-details {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    h3 {
+      margin-bottom: 1rem;
+    }
+  }
+
+  .user-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    p {
+      margin: 0;
+    }
+  }
+
+  .edit-form {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    h3 {
+      margin-bottom: 1rem;
+    }
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    label {
+      font-weight: 500;
+    }
+
+    input, select {
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .phone-input {
+      display: flex;
+      gap: 0.5rem;
+
+      select {
+        width: 100px;
+      }
+
+      input {
+        flex: 1;
+      }
+    }
+  }
+
+  .form-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+  }
+
+  .tickets-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    h3 {
+      margin-bottom: 1rem;
+    }
+  }
+}

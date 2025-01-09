@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import './MovieSlider.scss';
 
 interface Ticket {
     id: number;
     image: string;
     title: string;
+    normalizedTitle: string;
 }
 
 export const MovieSlider: React.FC = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
 
     const tickets: Ticket[] = [
-        { id: 1, image: 'https://assets-prd.ignimgs.com/2023/05/31/poster-1685564816246.jpeg', title: 'SPIDER-MAN' },
-        { id: 2, image: 'https://assets-prd.ignimgs.com/2023/05/31/poster-1685564816246.jpeg', title: 'SPIDER-MAN' },
-        { id: 3, image: 'https://assets-prd.ignimgs.com/2023/05/31/poster-1685564816246.jpeg', title: 'SPIDER-MAN' },
-        { id: 4, image: 'https://assets-prd.ignimgs.com/2023/05/31/poster-1685564816246.jpeg', title: 'SPIDER-MAN' },
-        { id: 5, image: 'https://assets-prd.ignimgs.com/2023/05/31/poster-1685564816246.jpeg', title: 'SPIDER-MAN' },
-        { id: 6, image: 'https://assets-prd.ignimgs.com/2023/05/31/poster-1685564816246.jpeg', title: 'SPIDER-MAN' },
-        { id: 7, image: 'https://assets-prd.ignimgs.com/2023/05/31/poster-1685564816246.jpeg', title: 'SPIDER-MAN' },
+        {
+            id: 1,
+            image: 'https://assets-prd.ignimgs.com/2023/05/31/poster-1685564816246.jpeg',
+            title: 'SPIDER-MAN',
+            normalizedTitle: 'spider-man'
+        },
+        // ... other tickets
     ];
 
     const visibleTickets = 5;
@@ -36,10 +38,9 @@ export const MovieSlider: React.FC = () => {
     return (
         <div className="carousel">
             <h1 className="carousel__title">
-                <span className="schedule__title-highlight">
-                    B
-                </span>
-                    UY TICKET</h1>
+                <span className="schedule__title-highlight">B</span>
+                UY TICKET
+            </h1>
             <div className="carousel__container">
                 <button
                     onClick={() => scroll('left')}
@@ -62,13 +63,19 @@ export const MovieSlider: React.FC = () => {
                                     <div className="ticket__image-container">
                                         <img
                                             src={ticket.image}
-                                            alt="Spider-Man"
+                                            alt={ticket.title}
                                             className="ticket__image"
                                         />
                                     </div>
                                     <div className="ticket__title">
                                         {ticket.title}
                                     </div>
+                                    <Link
+                                        to={`/movies/${ticket.normalizedTitle}`}
+                                        className="ticket__see-more"
+                                    >
+                                        SEE MORE
+                                    </Link>
                                 </div>
                             </div>
                         ))}
