@@ -1,6 +1,6 @@
 import "./Movie.scss";
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "../../components/Button/Button";
 import { MainLayout } from "../../layouts/MainLayout/MainLayout";
 
@@ -20,6 +20,7 @@ interface Movie {
 }
 
 export const Movie: React.FC = () => {
+    const navigate = useNavigate();
     const { title } = useParams<{ title: string }>();
     const [movie, setMovie] = useState<Movie | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -64,7 +65,10 @@ export const Movie: React.FC = () => {
             <section className="movie">
                 <div className="movie__header">
                     <h2 className="movie__title header--secondary">{movie.title}</h2>
-                    <Button className="button movie__button">
+                    <Button
+                        className="button movie__button"
+                        onClick={() => navigate(`/booking/${encodeURIComponent(movie.title)}`)}
+                    >
                         BUY TICKET
                     </Button>
                 </div>

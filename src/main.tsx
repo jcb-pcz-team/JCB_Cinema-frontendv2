@@ -19,18 +19,24 @@ import {UserManagement} from "./components/Admin/UserManagement/UserManagement.t
 import {TicketManagement} from "./components/Admin/Tickets/TicketManagement.tsx";
 import {AdminLayout} from "./components/Admin/AdminLayout.tsx";
 import {AdminGuard} from "./components/Admin/AdminGuard/AdminGuard.tsx";
+import {SeatSelection} from "./pages/SeatSelection/SeatSelection.tsx";
 
 const router = createBrowserRouter([
     {
         path: "/",
-        element: <App />,
+        element: <App/>,
         children: [
             {
                 path: "showtimes",
-                element: <Showtime />,
+                element: <Showtime/>,
             },
 
         ],
+    },
+    {
+        path: "booking/:movieTitle",
+        element: <SeatSelection/>,
+
     },
     {
         path: "movies/:title",
@@ -38,56 +44,56 @@ const router = createBrowserRouter([
     },
     {
         path: "/register",
-        element: <PageRegister />,
+        element: <PageRegister/>,
     },
     {
         path: "/login",
-        element: <PageLogin />,
+        element: <PageLogin/>,
     },
     {
         path: "/dashboard",
-        element: <Dashboard />,
+        element: <Dashboard/>,
         children: [
             {
                 path: "profile",
-                element: <Profile />,
+                element: <Profile/>,
             },
             {
                 path: "tickets",
-                element: <Tickets />,
+                element: <Tickets/>,
             },],
     },
     {
         path: "/admin",
         element: (
             <AdminGuard>
-                <AdminLayout />
+                <AdminLayout/>
             </AdminGuard>
         ),
         children: [
             {
                 path: "movies",
-                element: <MovieManagement />
+                element: <MovieManagement/>
             },
             {
                 path: "projections",
-                element: <ProjectionManagement />
+                element: <ProjectionManagement/>
             },
             {
                 path: "halls",
-                element: <HallManagement />
+                element: <HallManagement/>
             },
             {
                 path: "schedules",
-                element: <ScheduleManagement />
+                element: <ScheduleManagement/>
             },
             {
                 path: "users",
-                element: <UserManagement />
+                element: <UserManagement/>
             },
             {
                 path: "tickets",
-                element: <TicketManagement />
+                element: <TicketManagement/>
             }
         ]
     }
