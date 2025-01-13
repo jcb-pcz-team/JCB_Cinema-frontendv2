@@ -22,15 +22,23 @@ export const Ticket: React.FC<TicketProps> = ({
         <li className="ticket">
             <h3 className="ticket__header header--tertiary">{movieTitle}</h3>
             <div className="ticket__data-row">
-                <p className="ticket__paragraph paragraph--gray">Screen Type: {screenType}</p>
-                <p className="ticket__paragraph paragraph--gray">Screening Time: {new Date(screeningTime).toLocaleString()}</p>
-                <p className="ticket__paragraph paragraph--gray">Hall: {cinemaHall}</p>
-                <p className="ticket__paragraph paragraph--gray">Seat: {seatNumber}</p>
+                <p className="ticket__paragraph paragraph--gray" data-label="Screen Type:">
+                    {screenType}
+                </p>
+                <p className="ticket__paragraph paragraph--gray" data-label="Screening Time:">
+                    {new Date(screeningTime).toLocaleString()}
+                </p>
+                <p className="ticket__paragraph paragraph--gray" data-label="Hall:">
+                    {cinemaHall}
+                </p>
+                <p className="ticket__paragraph paragraph--gray" data-label="Seat:">
+                    {seatNumber}
+                </p>
             </div>
             {/*<a className="ticket__link" href={bookingURL}>*/}
             {/*    View Booking Details*/}
             {/*</a>*/}
-            <img className="ticket__logo" src="/assets/images/logo.svg" alt="logo" />
+            <img className="ticket__logo" src="/assets/images/logo.svg" alt="logo"/>
         </li>
     );
 };

@@ -1,14 +1,14 @@
 import React from "react";
 
-export interface InputProps {
-    id?: string;
-    name?: string;
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+    id: string;
+    name: string;
     type: string;
-    placeholder: string;
+    placeholder?: string;
     value?: string;
-    onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
     className?: string;
-    onBlur?: () => void;
     disabled?: boolean;
 }
 

@@ -136,7 +136,58 @@ const api = {
         }
 
         return true;
-    }
+    },
+
+    updateMovie: async (title: string, data: MovieCreateForm) => {
+        const token = localStorage.getItem('authToken');
+        if (!token) throw new Error('Not authenticated');
+
+        const response = await fetch(`https://localhost:7101/api/movies/update/${encodeURIComponent(title)}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: data.title,
+                description: data.description,
+                duration: data.duration,
+                releaseDate: data.releaseDate,
+                genre: data.genre,
+                setPreviousPoster: !data.posterFile
+            })
+        });
+
+        if (!response.ok) {
+            const text = await response.text();
+            try {
+                const errorData = JSON.parse(text);
+                throw new Error(errorData.title || 'Failed to update movie');
+            } catch (e) {
+                throw new Error('Failed to update movie');
+            }
+        }
+
+        if (data.posterFile) {
+            const formData = new FormData();
+            formData.append('PosterFile', data.posterFile);
+
+            const posterResponse = await fetch(`https://localhost:7101/api/movies/${encodeURIComponent(data.title)}/poster`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!posterResponse.ok) {
+                throw new Error('Failed to update movie poster');
+            }
+        }
+
+        return true;
+    },
+
 };
 
 export const MovieManagement: React.FC = () => {

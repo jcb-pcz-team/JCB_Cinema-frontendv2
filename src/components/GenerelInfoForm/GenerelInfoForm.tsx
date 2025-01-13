@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { FormikProps } from 'formik';
 import { Input } from '../Input/Input';
 import { Button } from '../Button/Button';
-import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface GeneralInfoValues {
     login: string;
@@ -11,17 +12,15 @@ interface GeneralInfoValues {
     phoneNumber: string;
     street: string;
     houseNumber: string;
+    dialCode?: string;
 }
 
 interface Props {
     formik: FormikProps<GeneralInfoValues>;
-    formError: string | null;
     onUpdateSuccess: () => void;
 }
 
-type FormField = keyof GeneralInfoValues;
-
-const FORM_FIELDS: FormField[] = [
+const FORM_FIELDS: (keyof GeneralInfoValues)[] = [
     'login',
     'firstName',
     'lastName',
@@ -31,133 +30,162 @@ const FORM_FIELDS: FormField[] = [
 ];
 
 export const GeneralInfoForm: React.FC<Props> = ({ formik, onUpdateSuccess }) => {
+    const queryClient = useQueryClient();
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const queryClient = useQueryClient()
-
-    const { data: userData, isLoading } = useQuery({
-        queryKey: ['userData'],
-        queryFn: async () => {
-            const response = await fetch('https://localhost:7101/api/users', {
-                headers: {
-                    'Accept': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch user data');
-            }
-
-            return response.json();
-        }
-    });
-
-    const formatFieldLabel = (field: string): string => {
-        return field.charAt(0).toUpperCase() +
-            field.slice(1).replace(/([A-Z])/g, ' $1');
-    };
 
     const mutation = useMutation({
         mutationFn: async (values: GeneralInfoValues) => {
-            const baseUrl = 'https://localhost:7101/api/users';
-            const params = new URLSearchParams();
+            let dialCode = '';
+            let phoneNumber = values.phoneNumber;
 
-            Object.entries(values).forEach(([key, value]) => {
-                if (value !== undefined && value !== null && value !== '') {
-                    const pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
-                    params.append(pascalKey, value.toString());
-                }
-            });
-
-            const response = await fetch(`${baseUrl}?${params.toString()}`, {
-                method: 'PUT',
-                headers: {
-                    'Accept': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                }
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Error response:', errorText);
-                throw new Error(errorText || 'Failed to update profile');
+            if (phoneNumber.startsWith('+')) {
+                dialCode = phoneNumber.substring(1, 3);
+                phoneNumber = phoneNumber.substring(3);
             }
 
-            return response.text() || null;
+            const dataToSend = {
+                ...values,
+                phoneNumber,
+                dialCode,
+            };
+
+            const response = await fetch('https://localhost:7101/api/users', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify(dataToSend)
+            });
+
+            let errorData;
+            try {
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    errorData = await response.json();
+                } else {
+                    errorData = await response.text();
+                }
+            } catch (error) {
+                throw new Error('Server error occurred');
+            }
+
+            if (!response.ok) {
+                if (typeof errorData === 'object' && errorData?.message) {
+                    throw new Error(errorData.message);
+                } else if (typeof errorData === 'string') {
+                    throw new Error(errorData || 'Failed to update profile');
+                } else {
+                    throw new Error('Failed to update profile');
+                }
+            }
+
+            return errorData;
         },
         onSuccess: () => {
+            // Zachowaj obecne wartości formularza
+            const currentValues = { ...formik.values };
+            formik.resetForm();
+            formik.setValues(currentValues);
+
             setSuccessMessage('Profile updated successfully!');
-            onUpdateSuccess();
-            queryClient.invalidateQueries({ queryKey: ['userData'] });
             setTimeout(() => setSuccessMessage(null), 3000);
+            queryClient.invalidateQueries({ queryKey: ['userData'] });
+            onUpdateSuccess();
+        },
+        onError: (error: Error) => {
+            formik.setStatus({ error: error.message });
         },
     });
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (formik.isValid && !mutation.isPending) {
+        if (formik.isValid && !formik.isSubmitting && formik.dirty) {
             mutation.mutate(formik.values);
         }
     };
 
-    React.useEffect(() => {
-        if (userData) {
-            formik.setValues({
-                login: userData.login || '',
-                firstName: userData.firstName || '',
-                lastName: userData.lastName || '',
-                phoneNumber: userData.phoneNumber || '',
-                street: userData.street || '',
-                houseNumber: userData.houseNumber || ''
-            });
+    const formatFieldLabel = (field: keyof GeneralInfoValues): string => {
+        if (field === 'phoneNumber') {
+            return 'Phone Number (e.g. +48123456789)';
         }
-    }, [userData]);
+        return field.charAt(0).toUpperCase() +
+            field.slice(1).replace(/([A-Z])/g, ' $1');
+    };
 
-    if (isLoading) {
-        return <div>Loading...</div>;
-    }
+    const handleFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        formik.setFieldValue(name, value);
+        formik.setFieldTouched(name, true, false);
+    };
+
+    const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let value = e.target.value;
+        value = value.replace(/[^\d+]/g, '');
+        if (value.includes('+')) {
+            value = '+' + value.replace(/\+/g, '');
+        }
+        formik.setFieldValue('phoneNumber', value);
+        formik.setFieldTouched('phoneNumber', true, false);
+    };
 
     return (
-        <>
+        <div className="general-info-form">
             {successMessage && (
-                <div className="success-message">{successMessage}</div>
+                <div className="success-message" role="alert">
+                    <CheckCircle2 className="inline-block mr-2" size={20} />
+                    {successMessage}
+                </div>
             )}
+
             <form onSubmit={handleSubmit} className="profile__form">
                 {FORM_FIELDS.map((field) => (
                     <div key={field} className="form-field">
-                        <label className="label" htmlFor={field}>
+                        <label htmlFor={field} className="label">
                             {formatFieldLabel(field)}
                         </label>
-                        <Input
-                            id={field}
-                            name={field}
-                            className="profile__input"
-                            type="text"
-                            placeholder={formatFieldLabel(field)}
-                            value={formik.values[field]}
-                            onChange={formik.handleChange}
-                            disabled={mutation.isPending}
-                        />
-                        {formik.touched[field] && formik.errors[field] && (
-                            <div className="error-message">
-                                <span>{formik.errors[field]}</span>
-                            </div>
-                        )}
+                        <div className="input-container">
+                            <Input
+                                id={field}
+                                name={field}
+                                type="text"
+                                className={`profile__input ${
+                                    formik.touched[field] && formik.errors[field] ? 'input--error' : ''
+                                } ${
+                                    formik.touched[field] && !formik.errors[field] ? 'input--success' : ''
+                                }`}
+                                placeholder={formatFieldLabel(field)}
+                                value={formik.values[field]}
+                                onChange={field === 'phoneNumber' ? handlePhoneNumberChange : handleFieldChange}
+                                onBlur={formik.handleBlur}
+                                disabled={mutation.isPending}
+                            />
+                            {formik.touched[field] && formik.errors[field] && (
+                                <div className="error-message" role="alert">
+                                    <AlertCircle className="inline-block mr-2" size={16} />
+                                    {formik.errors[field]}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 ))}
+
                 <Button
                     type="submit"
-                    className="button--white"
+                    className={`button--white ${(mutation.isPending || !formik.isValid || !formik.dirty) ? 'button--disabled' : ''}`}
                     disabled={mutation.isPending || !formik.isValid || !formik.dirty}
                 >
-                    {mutation.isPending ? 'SAVING...' : 'SAVE CHANGES'}
+                    {mutation.isPending ? 'Saving...' : 'Save Changes'}
                 </Button>
-                {mutation.isError && (
-                    <div className="error-message">
-                        <span>{formik.status}</span>
+
+                {formik.status?.error && (
+                    <div className="error-message" role="alert">
+                        <AlertCircle className="inline-block mr-2" size={20} />
+                        {formik.status.error}
                     </div>
                 )}
             </form>
-        </>
+        </div>
     );
 };

@@ -1,3 +1,27 @@
+@use "../../assets/styles/index" as i;
+
 .tickets {
-  max-width: 50rem;
+  width: 100%;
+
+  &__header {
+    margin-bottom: 2rem;
+    color: i.$clr-white;
+  }
+
+  &__content {
+    margin-top: 1rem;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  &__loading {
+    color: i.$clr-white;
+    font-size: 1.1rem;
+    text-align: center;
+    padding: 2rem;
+  }
 }

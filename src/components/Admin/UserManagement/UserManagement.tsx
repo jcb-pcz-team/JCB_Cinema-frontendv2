@@ -18,7 +18,7 @@ interface Booking {
     screenignTime: string;
     cienemaHall: string;
     seatNumber: number;
-    bookingURL: string;
+    // bookingURL: string;
 }
 
 const api = {
@@ -275,14 +275,14 @@ export const UserManagement = () => {
         }
     };
 
-    const handleEditBooking = (booking: Booking) => {
-        const bookingId = parseInt(booking.bookingURL.split('/').pop() || '0');
-        setEditingBooking({
-            bookingTicketId: bookingId,
-            movieProjectionId: bookingId,
-            seatId: booking.seatNumber
-        });
-    };
+    // const handleEditBooking = (booking: Booking) => {
+    //     const bookingId = parseInt(booking.bookingURL.split('/').pop() || '0');
+    //     setEditingBooking({
+    //         bookingTicketId: bookingId,
+    //         movieProjectionId: bookingId,
+    //         seatId: booking.seatNumber
+    //     });
+    // };
 
     const handleUpdateBooking = (e: React.FormEvent) => {
         e.preventDefault();
@@ -327,6 +327,12 @@ export const UserManagement = () => {
                             <p><strong>House Number:</strong> {currentUser.houseNumber}</p>
                             <p><strong>Phone:</strong> {currentUser.dialCode} {currentUser.phoneNumber}</p>
                         </div>
+                        {/*<button*/}
+                        {/*    className="button button--edit"*/}
+                        {/*    onClick={handleEditUser}*/}
+                        {/*>*/}
+                        {/*    Edit User*/}
+                        {/*</button>*/}
                     </div>
 
                     {bookings.length > 0 && (
@@ -340,7 +346,8 @@ export const UserManagement = () => {
                                     <th>Date & Time</th>
                                     <th>Hall</th>
                                     <th>Seat Number</th>
-                                    <th>Reference</th>
+                                    {/*<th>Reference</th>*/}
+                                    {/*<th>Actions</th>*/}
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -348,7 +355,7 @@ export const UserManagement = () => {
                                     const screeningDate = new Date(booking.screenignTime);
                                     const formattedDate = screeningDate.toLocaleDateString();
                                     const formattedTime = screeningDate.toLocaleTimeString();
-                                    const bookingId = booking.bookingURL.split('/').pop();
+                                    // const bookingId = booking.bookingURL.split('/').pop();
 
                                     return (
                                         <tr key={booking.bookingURL}>
@@ -357,7 +364,15 @@ export const UserManagement = () => {
                                             <td>{formattedDate} {formattedTime}</td>
                                             <td>{booking.cienemaHall}</td>
                                             <td>{booking.seatNumber}</td>
-                                            <td>{bookingId}</td>
+                                            {/*<td>{bookingId}</td>*/}
+                                            {/*<td>*/}
+                                            {/*    <button*/}
+                                            {/*        className="button button--small"*/}
+                                            {/*        onClick={() => handleEditBooking(booking)}*/}
+                                            {/*    >*/}
+                                            {/*        Edit*/}
+                                            {/*    </button>*/}
+                                            {/*</td>*/}
                                         </tr>
                                     );
                                 })}

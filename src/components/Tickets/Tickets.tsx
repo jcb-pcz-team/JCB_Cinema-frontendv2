@@ -12,13 +12,13 @@ interface TicketData {
 }
 
 export const Tickets: React.FC = () => {
-    const [tickets, setTickets] = useState<TicketData[]>([]); // Typ dla tablicy biletów
-    const [loading, setLoading] = useState<boolean>(true); // Typowanie boolean
+    const [tickets, setTickets] = useState<TicketData[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
         const fetchTickets = async () => {
             try {
-                const authToken = localStorage.getItem("authToken"); // Pobranie tokena z localStorage
+                const authToken = localStorage.getItem("authToken");
                 if (!authToken) {
                     throw new Error("Authentication token not found.");
                 }
@@ -27,7 +27,7 @@ export const Tickets: React.FC = () => {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
-                        Authorization: `Bearer ${authToken}`, // Dodanie tokena do nagłówków
+                        Authorization: `Bearer ${authToken}`,
                     },
                 });
 
@@ -48,25 +48,32 @@ export const Tickets: React.FC = () => {
     }, []);
 
     if (loading) {
-        return <p>Loading tickets...</p>;
+        return (
+            <div className="tickets">
+                <h2 className="profile__header header--secondary">My Tickets</h2>
+                <p className="tickets__loading">Loading tickets...</p>
+            </div>
+        );
     }
 
     return (
         <div className="tickets">
-            <h2 className="tickets__header header--secondary">My Tickets</h2>
-            <ul className="tickets__list">
-                {tickets.map((ticket) => (
-                    <Ticket
-                        key={ticket.bookingURL}
-                        movieTitle={ticket.movieTitle}
-                        screenType={ticket.screenType}
-                        screeningTime={ticket.screeningTime}
-                        cinemaHall={ticket.cinemaHall}
-                        seatNumber={ticket.seatNumber}
-                        bookingURL={ticket.bookingURL}
-                    />
-                ))}
-            </ul>
+            <h2 className="profile__header header--secondary">My Tickets</h2>
+            <div className="tickets__content">
+                <ul className="tickets__list">
+                    {tickets.map((ticket) => (
+                        <Ticket
+                            key={ticket.bookingURL}
+                            movieTitle={ticket.movieTitle}
+                            screenType={ticket.screenType}
+                            screeningTime={ticket.screeningTime}
+                            cinemaHall={ticket.cinemaHall}
+                            seatNumber={ticket.seatNumber}
+                            bookingURL={ticket.bookingURL}
+                        />
+                    ))}
+                </ul>
+            </div>
         </div>
     );
 };

@@ -6,11 +6,16 @@ import { EmailForm } from '../EmailForm/EmailForm.tsx';
 import { PasswordForm } from '../PasswordForm/PasswordForm.tsx';
 import './Profile.scss';
 
-const generalInfoValidation = Yup.object({
+const generalInfoValidation = Yup.object().shape({
     login: Yup.string().required("Login is required"),
+    firstName: Yup.string(),
+    lastName: Yup.string(),
     phoneNumber: Yup.string()
         .required('Phone number is required')
         .matches(/^\+\d{10,14}$/, 'Invalid phone number format'),
+    street: Yup.string(),
+    houseNumber: Yup.string(),
+    dialCode: Yup.string(),
 });
 
 const emailValidation = Yup.object({
@@ -49,6 +54,7 @@ export const Profile: React.FC = () => {
     const [formError, setFormError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [userData, setUserData] = useState<UserData | null>(null);
+    const [currentEmail, setCurrentEmail] = useState(userData?.email || '');
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -79,9 +85,7 @@ export const Profile: React.FC = () => {
     }, []);
 
     const handleUpdateSuccess = () => {
-        // Refresh user data after successful update
         setFormError(null);
-        // You might want to refetch the user data here
     };
 
     const generalInfoFormik = useFormik({
@@ -95,12 +99,34 @@ export const Profile: React.FC = () => {
         },
         enableReinitialize: true,
         validationSchema: generalInfoValidation,
-        onSubmit: () => {}
+        onSubmit: async (values) => {
+            try {
+                const authToken = localStorage.getItem('authToken');
+                const response = await fetch('https://localhost:7101/api/users', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(values)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update profile');
+                }
+
+                handleUpdateSuccess();
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                setFormError(error instanceof Error ? error.message : 'Failed to update profile');
+            }
+        }
     });
 
     const emailFormik = useFormik({
         initialValues: {
-            currentEmail: userData?.email || '',
+            currentEmail: currentEmail,
             newEmail: '',
         },
         enableReinitialize: true,
@@ -117,22 +143,40 @@ export const Profile: React.FC = () => {
         onSubmit: () => {}
     });
 
-    if (isLoading) return <div>Loading...</div>;
+    if (isLoading) {
+        return (
+            <div className="profile">
+                <h2 className="profile__header header--secondary">Profile</h2>
+                <p className="profile__loading">Loading...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="profile">
-            <h2 className="profile__header">General Info</h2>
-            <GeneralInfoForm
-                formik={generalInfoFormik}
-                formError={formError}
-                onUpdateSuccess={handleUpdateSuccess}
-            />
+            <div className="profile__content">
+                <div className="profile__group">
+                    <h2 className="profile__header header--secondary">General Info</h2>
+                    <GeneralInfoForm
+                        formik={generalInfoFormik}
+                        onUpdateSuccess={handleUpdateSuccess}
+                    />
+                </div>
 
-            <h2 className="profile__header">Change Email</h2>
-            <EmailForm formik={emailFormik} formError={formError} />
+                <div className="profile__group">
+                    <h2 className="profile__header header--secondary">Change Email</h2>
+                    <EmailForm
+                        formik={emailFormik}
+                        formError={formError}
+                        onEmailChange={(newEmail) => setCurrentEmail(newEmail)}
+                    />
+                </div>
 
-            <h2 className="profile__header">Change Password</h2>
-            <PasswordForm formik={passwordFormik} formError={formError} />
+                <div className="profile__group">
+                    <h2 className="profile__header header--secondary">Change Password</h2>
+                    <PasswordForm formik={passwordFormik} formError={formError} />
+                </div>
+            </div>
         </div>
     );
 };
