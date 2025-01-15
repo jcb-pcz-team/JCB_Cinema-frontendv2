@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '../../components/Button/Button';
 import { MainLayout } from '../../layouts/MainLayout/MainLayout';
 import './SeatSelection.scss';
+import { BookingSummary } from '../BookingSummary/BookingSummary';
 
 interface SeatProps {
     id: string;
@@ -18,13 +19,13 @@ export const SeatSelection: React.FC<{
           showtime = "14:30"
       }) => {
     const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+    const [showSummary, setShowSummary] = useState(false);
 
-    const generateSeats = () => {
-
+    const generateSeats = (): SeatProps[][] => {
         const unavailableSeats = new Set(['2-5', '2-6', '3-10', '3-11', '4-15', '4-16']);
 
         const seats: SeatProps[][] = [];
-
+        // First row has only 15 seats in the middle
         seats.push(Array(15).fill(null).map((_, idx) => ({
             id: `1-${idx + 1}`,
             row: 1,
@@ -32,6 +33,7 @@ export const SeatSelection: React.FC<{
             isAvailable: !unavailableSeats.has(`1-${idx + 1}`)
         })));
 
+        // Rows 2-16 have the full layout
         for (let row = 2; row <= 16; row++) {
             const rowSeats: SeatProps[] = [];
             for (let seat = 1; seat <= 28; seat++) {
@@ -48,7 +50,10 @@ export const SeatSelection: React.FC<{
         return seats;
     };
 
-    const handleSeatClick = (seatId: string) => {
+    // Use useMemo to cache the seats array
+    const seats = useMemo(() => generateSeats(), []);
+
+    const handleSeatClick = (seatId: string): void => {
         setSelectedSeats(prev => {
             if (prev.includes(seatId)) {
                 return prev.filter(id => id !== seatId);
@@ -57,7 +62,24 @@ export const SeatSelection: React.FC<{
         });
     };
 
-    const seats = generateSeats();
+    const handleContinue = (): void => {
+        setShowSummary(true);
+    };
+
+    const handleBackFromSummary = (): void => {
+        setShowSummary(false);
+    };
+
+    if (showSummary) {
+        return (
+            <BookingSummary
+                movieTitle={decodeURIComponent(movieTitle || 'Movie Title')}
+                showtime="14:30"
+                selectedSeats={selectedSeats}
+                onBack={handleBackFromSummary}
+            />
+        );
+    }
 
     return (
         <MainLayout>
@@ -65,7 +87,7 @@ export const SeatSelection: React.FC<{
                 <div className="seat-selection__container">
                     <div className="seat-selection__header">
                         <div className="seat-selection__title-section">
-                            <h1 className="seat-selection__movie-title">{movieTitle}</h1>
+                            <h1 className="seat-selection__movie-title">{decodeURIComponent(movieTitle || 'Movie Title')}</h1>
                             <p className="seat-selection__showtime">Showtime: {showtime}</p>
                         </div>
                     </div>
@@ -77,11 +99,11 @@ export const SeatSelection: React.FC<{
                     </div>
 
                     <div className="seat-selection__hall">
-                        {seats.map((row, rowIndex) => (
+                        {seats.map((row: SeatProps[], rowIndex: number) => (
                             <div key={rowIndex} className="seat-selection__row">
                                 <span className="seat-selection__row-number">{rowIndex + 1}</span>
                                 <div className="seat-selection__seats">
-                                    {row.map((seat) => (
+                                    {row.map((seat: SeatProps) => (
                                         <button
                                             key={seat.id}
                                             onClick={() => seat.isAvailable && handleSeatClick(seat.id)}
@@ -134,7 +156,7 @@ export const SeatSelection: React.FC<{
                         </Button>
                         <Button
                             className="seat-selection__button seat-selection__button--next"
-                            onClick={() => {/* Handle confirmation */}}
+                            onClick={handleContinue}
                             disabled={selectedSeats.length === 0}
                         >
                             Continue

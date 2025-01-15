@@ -1,0 +1,354 @@
+@use '../../assets/styles/index' as i;
+
+.booking-summary {
+  width: 100%;
+  min-height: calc(100vh - 80px);
+  margin-top: 80px;
+  background-color: rgba(0, 0, 0, 0.95);
+  color: #fff;
+
+  &__container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  &__modal {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  &__header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  &__title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: i.$clr-yellow;
+  }
+
+  &__subtitle {
+    font-size: 1.1rem;
+    opacity: 0.8;
+    margin-top: 0.5rem;
+  }
+
+  &__details {
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    margin: 2rem 0;
+  }
+
+  &__movie-info {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  &__movie-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+
+  &__showtime {
+    color: i.$clr-yellow;
+    font-size: 1.1rem;
+  }
+
+  &__divider {
+    height: 1px;
+    background: linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.1),
+                    transparent
+    );
+    margin: 2rem 0;
+  }
+
+  &__seats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+  }
+
+  &__seats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  &__seat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    transition: all 0.2s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  &__seat-info {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  &__seat-label {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95rem;
+
+    &:first-child {
+      padding-right: 1.5rem;
+      border-right: 1px solid rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  &__seat-price {
+    color: i.$clr-yellow;
+    font-weight: bold;
+  }
+
+  &__total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    margin-top: 2rem;
+  }
+
+  &__total-label {
+    font-size: 1.2rem;
+  }
+
+  &__total-amount {
+    font-size: 1.5rem;
+    color: i.$clr-yellow;
+    font-weight: bold;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  &__button {
+    min-width: 12rem;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-transform: uppercase;
+    transition: all 0.2s;
+
+    &--back {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+
+    &--confirm {
+      background: i.$clr-yellow;
+      color: #000;
+      position: relative;
+
+      &:hover {
+        filter: brightness(1.1);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      &.loading {
+        color: transparent;
+
+        &::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 1.5rem;
+          height: 1.5rem;
+          margin: -0.75rem 0 0 -0.75rem;
+          border: 2px solid transparent;
+          border-top-color: #000;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+      }
+    }
+  }
+}
+
+// Success state styles
+.booking-success {
+  width: 100%;
+  min-height: calc(100vh - 80px);
+  margin-top: 80px;
+  background-color: rgba(0, 0, 0, 0.95);
+  color: #fff;
+
+  &__container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  &__content {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+  }
+
+  &__icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 2rem;
+    background: i.$clr-yellow;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      width: 40px;
+      height: 40px;
+      fill: #000;
+    }
+  }
+
+  &__title {
+    font-size: 2.5rem;
+    color: i.$clr-yellow;
+    margin-bottom: 2rem;
+  }
+
+  &__movie {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  &__info {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+  }
+
+  &__details {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.5rem;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+  }
+
+  &__seats {
+    margin: 1.5rem 0;
+
+    &-label {
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 0.5rem;
+    }
+
+    &-list {
+      font-size: 1.1rem;
+      color: i.$clr-yellow;
+    }
+  }
+
+  &__price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+
+    &-amount {
+      color: i.$clr-yellow;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+  }
+
+  &__confirmation {
+    color: rgba(255, 255, 255, 0.8);
+    margin: 2rem 0;
+    line-height: 1.6;
+  }
+
+  &__button {
+    min-width: 12rem;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    background: i.$clr-yellow;
+    color: #000;
+
+    &:hover {
+      filter: brightness(1.1);
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@include i.respond-to(mobile) {
+  .booking-summary {
+    &__container {
+      padding: 1rem;
+    }
+
+    &__modal {
+      padding: 1.5rem;
+    }
+
+    &__details {
+      padding: 1.5rem;
+    }
+
+    &__actions {
+      flex-direction: column;
+      gap: 1rem;
+    }
+  }
+
+  .booking-success {
+    &__container {
+      padding: 1rem;
+    }
+
+    &__content {
+      padding: 2rem 1rem;
+    }
+  }
+}
