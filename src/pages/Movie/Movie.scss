@@ -6,14 +6,17 @@
   min-height: 100vh;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-direction: column;
-
   padding: 5rem 1rem 0 1rem;
   margin: 0 auto;
 
   @include i.respond-to(tablet) {
     max-width: 577px;
+  }
+
+  @include i.respond-to(desktop) {
+    max-width: 1200px;
   }
 
   > * {
@@ -22,213 +25,272 @@
 
   &__header {
     width: 100%;
+    margin-bottom: 2rem;
 
     button {
       width: 100%;
       border-radius: 3px;
       margin: 1rem 0 0 0;
-    }
+      background-color: #FCF02D;
+      color: #000000;
+      font-weight: 600;
+      transition: all 0.3s ease;
 
-    @include i.respond-to(desktop) {
-      display: flex;
-      align-content: center;
-      justify-content: space-between;
-
-      button {
-        max-width: 12rem;
-        padding: 1rem 2rem;
-        margin: 0;
+      &:hover {
+        background-color: darken(#FCF02D, 10%);
+        transform: translateY(-1px);
       }
     }
 
-    @include i.respond-to(large-desktop) {
-      display: flex;
-      align-content: center;
-      justify-content: space-between;
-
-      button {
-        max-width: 12rem;
-        padding: 1rem 2rem;
-        margin: 0;
-      }
-    }
-  }
-
-  &__video {
-    display: block;
-    width: 100%;
-    height: auto;
-
-    &-frame{
-      width: 100%;
-      height: auto;
-      border: none;
-      border-radius: 3px;
-      aspect-ratio: 16 / 9;
-    }
-  }
-
-  &__subtitle {
-    font-size: 1.2rem;
-    font-weight: 400;
-  }
-
-  &__content {
     @include i.respond-to(desktop) {
-      display: flex;
-      flex-direction: row;
-    }
-
-    @include i.respond-to(large-desktop) {
-      display: flex;
-      flex-direction: row;
-    }
-  }
-
-  &__description {
-    @include i.respond-to(desktop) {
-      width: 26rem;
-    }
-
-    @include i.respond-to(large-desktop) {
-      min-width: 28rem;
-    }
-  }
-
-  &__background-image {
-    width: 100%;
-    height: auto;
-    display: block;
-    border-radius: 5px;
-
-    @include i.respond-to(desktop) {
-      max-width: 26rem;
-    }
-
-    @include i.respond-to(large-desktop) {
-      max-width: 32rem;
-    }
-  }
-
-  &__infromation {
-    @include i.respond-to(desktop) {
-      display: flex;
-      flex-direction: column;
-    }
-
-    @include i.respond-to(large-desktop) {
-      display: flex;
-      flex-direction: column;
-    }
-  }
-
-  &__info {
-    display: flex;
-    align-items: center;
-    justify-content: start;
-    margin: 1rem 0;
-
-    @include i.respond-to(desktop) {
-      flex-direction: column;
-      justify-content: start;
-    }
-
-    @include i.respond-to(large-desktop) {
-      flex-direction: column;
-      align-items: start;
-      justify-content: start;
-      row-gap: 1rem;
-    }
-
-    &-item {
       display: flex;
       align-items: center;
-      justify-content: center;
-    }
+      justify-content: space-between;
 
-    &-item:nth-child(1) {
-      margin-right: 1rem;
-    }
-
-    &-icon {
-      margin-right: .3rem;
-    }
-
-    &-label {
-      margin-right: .3rem;
+      button {
+        max-width: 12rem;
+        padding: 1rem 2rem;
+        margin: 0;
+      }
     }
   }
 
-  &__details {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  &__details-term,
-  &__details-definition {
-    display: inline-flex;
-    align-items: center;
-  }
-
-  &__details-term {
-    font-weight: bold;
-    width: 150px;
-  }
-
-  &__details-definition {
-    font-style: italic;
-    margin-left: 0.5rem;
-  }
-
-  &__details-item {
-    display: flex;
-    justify-content: flex-start;
-    gap: 0.5rem;
-    padding: .3rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  }
-
-  &__background-image {
-    border: 1px solid #FCF02D;
-    border-radius: 3px;
-
-    @include i.respond-to(desktop) {
-      margin: 0 0 0 2rem;
-    }
-
-    @include i.respond-to(large-desktop) {
-      margin: 0 0 0 2rem;
-    }
-  }
-}
-
-.movie {
   &__content {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    width: 100%;
+    margin-bottom: 3rem;
     gap: 2rem;
 
     @include i.respond-to(desktop) {
       flex-direction: row;
       align-items: flex-start;
-      gap: 2rem;
     }
   }
 
-  &__video {
-    &-frame {
-      max-width: 100%;
-      height: auto;
-      aspect-ratio: 16 / 9;
+  &__information {
+    flex: 1;
+  }
+
+  &__poster {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+
+    @include i.respond-to(desktop) {
+      width: 40%;
+      margin: 0;
     }
+
+    img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 2px solid #FCF02D;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+    }
+  }
+
+  &__description {
+    margin-top: 1.5rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
   }
 
   &__info {
-    @include i.respond-to(desktop) {
-      align-items: flex-start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+
+    &-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+    }
+
+    &-label {
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    &-text {
+      color: #ffffff;
     }
   }
+
+  &__schedule {
+    width: 100%;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    scroll-margin-top: 2rem;
+
+    &-title {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    &-times {
+      margin-top: 2rem;
+    }
+
+    &-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    &-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.08);
+      }
+    }
+
+    &-info {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    &-time {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background-color: #FCF02D;
+      color: #000000;
+      border-radius: 4px;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: darken(#FCF02D, 10%);
+        transform: translateY(-1px);
+      }
+    }
+  }
+}
+
+// Schedule day buttons styles
+.schedule {
+  &__days {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+
+    &::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.4);
+      }
+    }
+  }
+
+  &__day-btn {
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    min-width: 80px;
+    font-size: 0.9rem;
+
+    &:hover:not(&--active) {
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    &--active {
+      background: #FCF02D;
+      color: #000000;
+      font-weight: 600;
+    }
+  }
+
+  &__empty-message {
+    text-align: center;
+    padding: 2rem;
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    font-size: 1.1rem;
+  }
+
+  &__title-highlight {
+    color: #FCF02D;
+  }
+}
+
+// Additional responsive adjustments
+@media (max-width: 480px) {
+  .movie {
+    &__schedule-grid {
+      grid-template-columns: 1fr;
+    }
+
+    &__info {
+      flex-direction: column;
+
+      &-item {
+        width: 100%;
+      }
+    }
+
+    &__description {
+      font-size: 0.95rem;
+    }
+  }
+
+  .schedule__day-btn {
+    padding: 0.5rem 1rem;
+    min-width: 70px;
+    font-size: 0.85rem;
+  }
+}
+
+// Loading and error states
+.movie__loading,
+.movie__error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  padding: 2rem;
 }
