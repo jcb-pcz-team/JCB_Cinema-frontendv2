@@ -17,30 +17,31 @@ interface Movie {
     title: string;
     description: string;
     duration: number;
+    releaseDate: string;
     genre: {
+        genreId: number;
         genreName: string;
     };
     normalizedTitle: string;
+    release: string;
 }
 
-interface Screening {
+interface MovieProjection {
     movieProjectionId: number;
     movie: Movie;
     screeningTime: string;
     screenType: string;
     cinemaHall: {
+        cinemaHallId: number;
         name: string;
     };
+    normalizedMovieTitle: string;
     price: {
         ammount: number;
         currency: string;
     };
+    occupiedSeats: number;
     availableSeats: number;
-}
-
-interface ScheduleDay {
-    date: string;
-    screenings: Screening[];
 }
 
 export const Showtime: React.FC = () => {
@@ -68,47 +69,35 @@ export const Showtime: React.FC = () => {
         return days;
     }, []);
 
-    // Fetch schedules using React Query with date range
-    const { data: schedules = [], isLoading, error } = useQuery<ScheduleDay[]>({
-        queryKey: ['schedules', selectedDay],
+    // Fetch movie projections using React Query
+    const { data: movieProjections = [], isLoading, error } = useQuery<MovieProjection[]>({
+        queryKey: ['movieProjections'],
         queryFn: async () => {
-            const startDate = new Date(selectedDay);
-            const endDate = new Date(selectedDay);
-            endDate.setDate(endDate.getDate() + 6);
-
-            const dateFrom = startDate.toISOString().split('T')[0];
-            const dateTo = endDate.toISOString().split('T')[0];
-
-            const response = await fetch(
-                `https://localhost:7101/api/schedules?DateFrom=${dateFrom}&DateTo=${dateTo}`
-            );
-
+            const response = await fetch('https://localhost:7101/api/moviesprojection');
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || 'Failed to fetch schedules');
+                throw new Error('Failed to fetch movie projections');
             }
             return response.json();
         },
-        staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+        staleTime: 5 * 60 * 1000,
         retry: 2
     });
 
     const screeningTypes: ScreeningFormat[] = ['All', '2D', '3D', 'IMAX', '4DX'];
     const genres: Genre[] = ['All', 'Action', 'Drama', 'Science Fiction', 'War'];
 
-    // Filter and sort screenings based on selected criteria
-    const filteredScreenings = useMemo(() => {
-        const daySchedule = schedules.find(schedule => schedule.date === selectedDay);
-        if (!daySchedule) return [];
-
-        return daySchedule.screenings
-            .filter(screening => {
-                const matchesType = selectedType === 'All' || screening.screenType === selectedType;
-                const matchesGenre = selectedGenre === 'All' || screening.movie.genre.genreName === selectedGenre;
-                return matchesType && matchesGenre;
+    // Filter projections based on selected criteria
+    const filteredProjections = useMemo(() => {
+        return movieProjections
+            .filter(projection => {
+                const projectionDate = new Date(projection.screeningTime).toISOString().split('T')[0];
+                const matchesDay = projectionDate === selectedDay;
+                const matchesType = selectedType === 'All' || projection.screenType === selectedType;
+                const matchesGenre = selectedGenre === 'All' || projection.movie.genre.genreName === selectedGenre;
+                return matchesDay && matchesType && matchesGenre;
             })
             .sort((a, b) => new Date(a.screeningTime).getTime() - new Date(b.screeningTime).getTime());
-    }, [schedules, selectedDay, selectedType, selectedGenre]);
+    }, [movieProjections, selectedDay, selectedType, selectedGenre]);
 
     const fetchImage = async (title: string, normalizedTitle: string): Promise<string> => {
         const token = localStorage.getItem('authToken');
@@ -116,12 +105,11 @@ export const Showtime: React.FC = () => {
             'Authorization': `Bearer ${token}`
         };
 
-        // Try different path formats
         const paths = [
-            normalizedTitle,              // normalized (e.g., forrest-gump)
-            title,                        // original title (e.g., Forrest Gump)
-            title.toLowerCase(),          // lowercase (e.g., forrest gump)
-            title.replace(/\s+/g, '-')    // spaces to dashes (e.g., Forrest-Gump)
+            normalizedTitle,
+            title,
+            title.toLowerCase(),
+            title.replace(/\s+/g, '-')
         ];
 
         for (const path of paths) {
@@ -145,7 +133,7 @@ export const Showtime: React.FC = () => {
         return (
             <div className="schedule">
                 <div className="schedule__empty-message">
-                    Failed to load schedules. Please try again later.
+                    Failed to load movie projections. Please try again later.
                 </div>
             </div>
         );
@@ -155,7 +143,7 @@ export const Showtime: React.FC = () => {
         return (
             <div className="schedule">
                 <div className="schedule__empty-message">
-                    Loading schedules...
+                    Loading movie projections...
                 </div>
             </div>
         );
@@ -210,55 +198,54 @@ export const Showtime: React.FC = () => {
                 </header>
 
                 <div className="schedule__movie-list">
-                    {filteredScreenings.length === 0 ? (
+                    {filteredProjections.length === 0 ? (
                         <div className="schedule__empty-message">
                             No movies match your selected criteria
                         </div>
                     ) : (
-                        filteredScreenings.map((screening) => (
-                            <div key={screening.movieProjectionId} className="movie-card">
+                        filteredProjections.map((projection) => (
+                            <div key={projection.movieProjectionId} className="movie-card">
                                 <div className="movie-card__poster">
-                                    <Link to={`/movies/${screening.movie.normalizedTitle}`}>
+                                    <Link to={`/movies/${projection.movie.normalizedTitle}`}>
                                         <img
-                                            src={`https://localhost:7101/api/photos/${screening.movie.normalizedTitle}`}
-                                            alt={screening.movie.title}
+                                            src={`https://localhost:7101/api/photos/${projection.movie.normalizedTitle}`}
+                                            alt={projection.movie.title}
                                             onError={(e) => {
                                                 const img = e.target as HTMLImageElement;
-                                                // Try to fetch with authorization and different path formats
-                                                fetchImage(screening.movie.title, screening.movie.normalizedTitle)
+                                                fetchImage(projection.movie.title, projection.movie.normalizedTitle)
                                                     .then(url => {
                                                         img.src = url;
                                                     })
                                                     .catch(() => {
-                                                        img.src = '/placeholder.jpg'; // Fallback image
-                                                        console.error('Failed to load image for:', screening.movie.title);
+                                                        img.src = '/placeholder.jpg';
+                                                        console.error('Failed to load image for:', projection.movie.title);
                                                     });
                                             }}
                                         />
                                     </Link>
                                 </div>
                                 <div className="movie-card__content">
-                                    <h2 className="movie-card__title">{screening.movie.title}</h2>
+                                    <h2 className="movie-card__title">{projection.movie.title}</h2>
                                     <div className="movie-card__info">
-                                        {screening.movie.genre.genreName} | {screening.movie.duration} min
+                                        {projection.movie.genre.genreName} | {projection.movie.duration} min
                                     </div>
                                     <div className="movie-card__format">
-                                        {screening.screenType} | {screening.cinemaHall.name} |
-                                        Available seats: {screening.availableSeats}
+                                        {projection.screenType} | {projection.cinemaHall.name} |{' '}
+                                        Price: {(projection.price.ammount / 100).toFixed(2)} {projection.price.currency}
                                     </div>
                                     <div className="movie-card__showtimes">
                                         <Link
-                                            to={`/booking/${encodeURIComponent(screening.movie.title)}`}
+                                            to={`/booking/${encodeURIComponent(projection.movie.title)}`}
                                             className="movie-card__time-btn"
                                             state={{
-                                                showtime: new Date(screening.screeningTime).toLocaleTimeString([], {
+                                                showtime: new Date(projection.screeningTime).toLocaleTimeString([], {
                                                     hour: '2-digit',
                                                     minute: '2-digit'
                                                 }),
-                                                movieProjectionId: screening.movieProjectionId
+                                                movieProjectionId: projection.movieProjectionId
                                             }}
                                         >
-                                            {new Date(screening.screeningTime).toLocaleTimeString([], {
+                                            {new Date(projection.screeningTime).toLocaleTimeString([], {
                                                 hour: '2-digit',
                                                 minute: '2-digit'
                                             })}
