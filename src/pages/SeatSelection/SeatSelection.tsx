@@ -14,7 +14,6 @@ import "./SeatSelection.scss";
  * Enum reprezentujący możliwe statusy miejsca
  * @enum {number}
  */
-
 enum SeatStatusEnum {
     Available = 0,
     Occupied = 1,
@@ -25,7 +24,6 @@ enum SeatStatusEnum {
  * Interfejs statusu miejsca z API
  * @interface SeatStatus
  */
-
 interface SeatStatus {
     seatId: number;
     status: number;
@@ -35,7 +33,6 @@ interface SeatStatus {
  * Interfejs projekcji filmu z API
  * @interface MovieProjection
  */
-
 interface MovieProjection {
     movieProjectionId: number;
     movie: {
@@ -59,7 +56,6 @@ interface MovieProjection {
  * Props dla pojedynczego miejsca
  * @interface SeatProps
  */
-
 interface SeatProps {
     id: number;
     row: number;
@@ -67,11 +63,10 @@ interface SeatProps {
     status: SeatStatusEnum;
 }
 
-/**
- * Komponent wyboru miejsc w sali kinowej
- * @component
- * @returns {JSX.Element} Komponent wyboru miejsc
- */
+// Stałe konfiguracyjne
+const BASE_SEAT_ID = 350; // ID początkowe z API
+const ROWS = 5;
+const SEATS_PER_ROW = 5;
 
 export const SeatSelection: React.FC = () => {
     const { movieTitle } = useParams<{ movieTitle: string }>();
@@ -82,16 +77,9 @@ export const SeatSelection: React.FC = () => {
     const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
     const [showSummary, setShowSummary] = useState(false);
 
-    /**
-     * Pobiera nagłówki autoryzacji
-     * @returns {Object} Nagłówki z tokenem autoryzacji
-     * @throws {Error} Błąd gdy użytkownik nie jest zalogowany
-     */
-
     const getAuthHeaders = () => {
         const token = localStorage.getItem('authToken');
         if (!token) {
-            // Przekieruj do strony logowania i zapisz obecną ścieżkę
             navigate('/login', { state: { from: location.pathname } });
             throw new Error('Not authenticated');
         }
@@ -157,30 +145,24 @@ export const SeatSelection: React.FC = () => {
     // Generate seats layout
     const seats = useMemo(() => {
         const seatRows: SeatProps[][] = [];
-        const seatsPerRow = 5;
 
-        for (let row = 0; row < 5; row++) {
+        for (let row = 0; row < ROWS; row++) {
             const rowSeats: SeatProps[] = [];
-            for (let seatInRow = 0; seatInRow < seatsPerRow; seatInRow++) {
-                const seatId = row * seatsPerRow + seatInRow + 1;
+            for (let seatInRow = 0; seatInRow < SEATS_PER_ROW; seatInRow++) {
+                const seatId = BASE_SEAT_ID + (row * SEATS_PER_ROW + seatInRow + 1);
                 const seatStatus = seatsStatus.find(s => s.seatId === seatId);
 
                 rowSeats.push({
                     id: seatId,
                     row: row + 1,
                     number: seatInRow + 1,
-                    status: seatStatus?.status ?? 1
+                    status: seatStatus?.status ?? SeatStatusEnum.Available // Domyślnie miejsce jest dostępne
                 });
             }
             seatRows.push(rowSeats);
         }
         return seatRows;
     }, [seatsStatus]);
-
-    /**
-     * Obsługuje kliknięcie w miejsce
-     * @param {number} seatId - ID klikniętego miejsca
-     */
 
     const handleSeatClick = (seatId: number) => {
         setSelectedSeats(prev => {
@@ -191,33 +173,19 @@ export const SeatSelection: React.FC = () => {
         });
     };
 
-    /**
-     * Formatuje cenę do wyświetlenia
-     * @param {number} amount - Kwota w najmniejszej jednostce waluty
-     * @param {string} currency - Kod waluty
-     * @returns {string} Sformatowana cena
-     */
-
     const formatPrice = (amount: number, currency: string): string => {
         return `${(amount / 100).toFixed(2)} ${currency}`;
     };
-
-    /**
-     * Zwraca klasę CSS dla miejsca
-     * @param {SeatProps} seat - Właściwości miejsca
-     * @param {boolean} isSelected - Czy miejsce jest wybrane
-     * @returns {string} Nazwa klasy CSS
-     */
 
     const getSeatClassName = (seat: SeatProps, isSelected: boolean): string => {
         if (isSelected) return 'seat-selection__seat--selected';
 
         switch (seat.status) {
-            case 0: // Available (wolne)
+            case SeatStatusEnum.Available:
                 return 'seat-selection__seat--available';
-            case 2: // Reserved (zarezerwowane)
+            case SeatStatusEnum.Reservation:
                 return 'seat-selection__seat--reserved';
-            case 1: // Occupied (zajęte)
+            case SeatStatusEnum.Occupied:
             default:
                 return 'seat-selection__seat--unavailable';
         }
@@ -292,9 +260,9 @@ export const SeatSelection: React.FC = () => {
                                     {row.map((seat) => (
                                         <button
                                             key={seat.id}
-                                            onClick={() => seat.status === 0 && handleSeatClick(seat.id)}
+                                            onClick={() => seat.status === SeatStatusEnum.Available && handleSeatClick(seat.id)}
                                             className={`seat-selection__seat ${getSeatClassName(seat, selectedSeats.includes(seat.id))}`}
-                                            disabled={seat.status !== 0}
+                                            disabled={seat.status !== SeatStatusEnum.Available}
                                         >
                                             <span className="seat-selection__seat-number">{seat.number}</span>
                                         </button>
@@ -306,7 +274,7 @@ export const SeatSelection: React.FC = () => {
                     </div>
 
                     <div className="seat-selection__info">
-                    <div className="seat-selection__legend">
+                        <div className="seat-selection__legend">
                             <div className="seat-selection__legend-item">
                                 <div className="seat-selection__legend-box seat-selection__legend-box--available"></div>
                                 <span>Available</span>

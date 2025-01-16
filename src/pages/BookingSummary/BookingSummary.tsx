@@ -4,6 +4,7 @@
 
 import React, { useState } from 'react';
 import './BookingSummary.scss';
+import {Link} from "react-router-dom";
 
 /**
  * Props dla komponentu BookingSummary
@@ -71,8 +72,9 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
         try {
             const headers = getAuthHeaders();
 
-            // Create bookings for each selected seat
-            const bookingPromises = selectedSeats.map(async (seatId) => {
+            // Create bookings one by one and wait for each response
+            const bookings = [];
+            for (const seatId of selectedSeats) {
                 const bookingData = {
                     movieProjectionId: Number(movieProjectionId),
                     seatId: Number(seatId)
@@ -88,38 +90,44 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
 
                 if (!bookingResponse.ok) {
                     const errorText = await bookingResponse.text();
-                    console.error('Booking creation failed:', errorText);
                     throw new Error(`Failed to create booking for seat ${seatId}. Server response: ${errorText}`);
                 }
 
-                const booking = await bookingResponse.json();
-                console.log('Booking created successfully:', booking);
-                return booking;
-            });
+                // API zwraca bezpośrednio ID jako tekst
+                const bookingId = await bookingResponse.text();
+                console.log(`Created booking with ID: ${bookingId} for seat: ${seatId}`);
 
-            const bookings = await Promise.all(bookingPromises);
+                // Sprawdź czy otrzymaliśmy prawidłowe ID (liczba)
+                if (!bookingId || isNaN(Number(bookingId))) {
+                    throw new Error(`Server returned invalid booking ID: ${bookingId}`);
+                }
+
+                bookings.push({
+                    id: Number(bookingId),
+                    seatId: seatId
+                });
+            }
+
             console.log('All bookings created:', bookings);
 
-            // Confirm each booking
-            const confirmPromises = bookings.map(async (booking) => {
-                console.log('Confirming booking:', booking.bookingId);
-                const confirmResponse = await fetch(`https://localhost:7101/api/bookings/confirm/${booking.bookingId}`, {
+            // Confirm each booking one by one
+            for (const booking of bookings) {
+                console.log(`Confirming booking ID: ${booking.id} for seat: ${booking.seatId}`);
+
+                const confirmResponse = await fetch(`https://localhost:7101/api/bookings/confirm/${booking.id}`, {
                     method: 'POST',
                     headers
                 });
 
                 if (!confirmResponse.ok) {
                     const errorText = await confirmResponse.text();
-                    console.error('Booking confirmation failed:', errorText);
-                    throw new Error(`Failed to confirm booking ${booking.bookingId}. Server response: ${errorText}`);
+                    throw new Error(`Failed to confirm booking ${booking.id}. Server response: ${errorText}`);
                 }
 
-                console.log('Booking confirmed successfully:', booking.bookingId);
-            });
+                console.log(`Successfully confirmed booking ID: ${booking.id}`);
+            }
 
-            await Promise.all(confirmPromises);
             console.log('All bookings confirmed successfully');
-
             setBookingComplete(true);
         } catch (err) {
             console.error('Booking error:', err);
@@ -164,7 +172,9 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                         </div>
 
                         <button className="booking-success__button" onClick={onHome}>
-                            Return to Home
+                            <Link to="/">
+                                Return to Home
+                            </Link>
                         </button>
                     </div>
                 </div>
