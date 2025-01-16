@@ -110,8 +110,35 @@ export const Showtime: React.FC = () => {
             .sort((a, b) => new Date(a.screeningTime).getTime() - new Date(b.screeningTime).getTime());
     }, [schedules, selectedDay, selectedType, selectedGenre]);
 
-    const formatPrice = (amount: number, currency: string): string => {
-        return `${(amount / 100).toFixed(2)} ${currency}`;
+    const fetchImage = async (title: string, normalizedTitle: string): Promise<string> => {
+        const token = localStorage.getItem('authToken');
+        const headers = {
+            'Authorization': `Bearer ${token}`
+        };
+
+        // Try different path formats
+        const paths = [
+            normalizedTitle,              // normalized (e.g., forrest-gump)
+            title,                        // original title (e.g., Forrest Gump)
+            title.toLowerCase(),          // lowercase (e.g., forrest gump)
+            title.replace(/\s+/g, '-')    // spaces to dashes (e.g., Forrest-Gump)
+        ];
+
+        for (const path of paths) {
+            try {
+                const response = await fetch(`https://localhost:7101/api/photos/${encodeURIComponent(path)}`, {
+                    headers
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    return URL.createObjectURL(blob);
+                }
+            } catch (error) {
+                console.log(`Failed to fetch image with path: ${path}`);
+            }
+        }
+
+        throw new Error('Failed to load image with any path format');
     };
 
     if (error) {
@@ -193,8 +220,20 @@ export const Showtime: React.FC = () => {
                                 <div className="movie-card__poster">
                                     <Link to={`/movies/${screening.movie.normalizedTitle}`}>
                                         <img
-                                            src={`/api/photos/${screening.movie.title}`}
+                                            src={`https://localhost:7101/api/photos/${screening.movie.normalizedTitle}`}
                                             alt={screening.movie.title}
+                                            onError={(e) => {
+                                                const img = e.target as HTMLImageElement;
+                                                // Try to fetch with authorization and different path formats
+                                                fetchImage(screening.movie.title, screening.movie.normalizedTitle)
+                                                    .then(url => {
+                                                        img.src = url;
+                                                    })
+                                                    .catch(() => {
+                                                        img.src = '/placeholder.jpg'; // Fallback image
+                                                        console.error('Failed to load image for:', screening.movie.title);
+                                                    });
+                                            }}
                                         />
                                     </Link>
                                 </div>
