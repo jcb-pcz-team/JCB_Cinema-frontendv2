@@ -291,17 +291,6 @@ export const ScheduleManagement = () => {
         handleCloseForm();
     };
 
-    const handleEdit = (schedule: Schedule) => {
-        setFormData(schedule);
-        setEditingId(schedule.id);
-        setIsFormVisible(true);
-    };
-
-    const handleDelete = (id: number) => {
-        // Delete logic here
-        console.log('Deleting schedule:', id);
-    };
-
     const handleCloseForm = () => {
         setFormData(INITIAL_SCHEDULE_FORM);
         setEditingId(null);
@@ -475,22 +464,6 @@ export const ScheduleManagement = () => {
                         <td>{schedule.endTime}</td>
                         <td>{schedule.availableSeats}</td>
                         <td>{schedule.status}</td>
-                        <td>
-                            <div className="admin-table__actions">
-                                <button
-                                    className="button button--edit"
-                                    onClick={() => handleEdit(schedule)}
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    className="button button--delete"
-                                    onClick={() => handleDelete(schedule.id)}
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        </td>
                     </tr>
                 ))}
                 {sortedSchedules.length === 0 && (
