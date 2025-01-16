@@ -1,86 +1,118 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import './MovieSlider.scss';
+import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import "./MovieSlider.scss";
 
-/**
- * Represents a movie ticket/poster in the slider
- */
-interface Ticket {
-    /** Unique identifier for the ticket */
-    id: number;
-    /** URL of the movie poster image */
-    image: string;
-    /** Movie title */
+interface Movie {
     title: string;
-    /** Normalized title for URL routing */
+    description: string;
+    duration: number;
+    releaseDate: string;
+    genre: {
+        genreId: number;
+        genreName: string;
+    };
     normalizedTitle: string;
+    release: string;
 }
 
-/**
- * Movie Slider Component
- *
- * Displays a carousel of movie tickets with navigation controls
- * Allows scrolling through available movies
- *
- * @returns A React component showing a scrollable movie selection
- */
-export const MovieSlider: React.FC = () => {
-    /**
-     * State to track current slider position
-     * Determines which movies are currently visible
-     */
+export const MovieSlider = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
-
-    /**
-     * Collection of movie tickets to display in the slider
-     * Note: Only one ticket shown in the provided code snippet
-     */
-    const tickets: Ticket[] = [
-        {
-            id: 1,
-            image: 'https://assets-prd.ignimgs.com/2023/05/31/poster-1685564816246.jpeg',
-            title: 'SPIDER-MAN',
-            normalizedTitle: 'spider-man'
-        },
-        // Placeholder for additional tickets
-    ];
-
-    /** Number of tickets visible at once */
+    const navigate = useNavigate();
     const visibleTickets = 5;
 
-    /**
-     * Determines if left scroll is possible
-     * @returns Boolean indicating if can scroll left
-     */
+    const { data: movies = [], isLoading, error } = useQuery<Movie[]>({
+        queryKey: ['upcomingMovies'],
+        queryFn: async () => {
+            const response = await fetch('https://localhost:7101/api/movies/upcoming');
+            if (!response.ok) {
+                throw new Error('Failed to fetch upcoming movies');
+            }
+            return response.json();
+        },
+        staleTime: 5 * 60 * 1000,
+        retry: 2
+    });
+
+    const fetchImage = async (title: string, normalizedTitle: string): Promise<string> => {
+        const token = localStorage.getItem('authToken');
+        const headers = {
+            'Authorization': `Bearer ${token}`
+        };
+
+        const paths = [
+            normalizedTitle,
+            title,
+            title.toLowerCase(),
+            title.replace(/\s+/g, '-')
+        ];
+
+        for (const path of paths) {
+            try {
+                const response = await fetch(`https://localhost:7101/api/photos/${encodeURIComponent(path)}`, {
+                    headers
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    return URL.createObjectURL(blob);
+                }
+            } catch (error) {
+                console.log(`Failed to fetch image with path: ${path}`);
+            }
+        }
+
+        throw new Error('Failed to load image with any path format');
+    };
+
     const canScrollLeft = currentIndex > 0;
+    const canScrollRight = currentIndex < (movies.length - visibleTickets);
 
-    /**
-     * Determines if right scroll is possible
-     * @returns Boolean indicating if can scroll right
-     */
-    const canScrollRight = currentIndex < tickets.length - visibleTickets;
-
-    /**
-     * Scrolls the slider left or right
-     * @param direction - Direction of scroll ('left' or 'right')
-     */
     const scroll = (direction: 'left' | 'right') => {
         setCurrentIndex(prev => {
             if (direction === 'left') {
                 return Math.max(prev - 1, 0);
             }
-            return Math.min(prev + 1, tickets.length - visibleTickets);
+            return Math.min(prev + 1, movies.length - visibleTickets);
         });
     };
+
+    const handleMovieClick = (normalizedTitle: string) => {
+        navigate(`/movies/${normalizedTitle}`);
+    };
+
+    if (isLoading) {
+        return (
+            <div className="carousel">
+                <h1 className="carousel__title">
+                    <span className="schedule__title-highlight">U</span>
+                    pcoming Movies
+                </h1>
+                <div className="flex items-center justify-center p-4">Loading movies...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="carousel">
+                <h1 className="carousel__title">
+                    <span className="schedule__title-highlight">U</span>
+                    pcoming Movies
+                </h1>
+                <div className="flex items-center justify-center p-4 text-red-500">
+                    Failed to load movies. Please try again later.
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="carousel">
             <h1 className="carousel__title">
-                <span className="schedule__title-highlight">B</span>
-                UY TICKET
+                <span className="schedule__title-highlight">U</span>
+                pcoming Movies
             </h1>
             <div className="carousel__container">
-                {/* Left navigation button */}
                 <button
                     onClick={() => scroll('left')}
                     className={`carousel__button ${!canScrollLeft ? 'carousel__button--disabled' : ''}`}
@@ -96,32 +128,39 @@ export const MovieSlider: React.FC = () => {
                         className="carousel__slides"
                         style={{ transform: `translateX(-${currentIndex * (100 / visibleTickets)}%)` }}
                     >
-                        {tickets.map((ticket) => (
-                            <div key={ticket.id} className="carousel__slide">
-                                <div className="ticket">
+                        {movies.map((movie) => (
+                            <div key={movie.title} className="carousel__slide">
+                                <div
+                                    className="ticket"
+                                    onClick={() => handleMovieClick(movie.normalizedTitle)}
+                                >
                                     <div className="ticket__image-container">
                                         <img
-                                            src={ticket.image}
-                                            alt={ticket.title}
+                                            src={`https://localhost:7101/api/photos/${movie.normalizedTitle}`}
+                                            alt={movie.title}
                                             className="ticket__image"
+                                            onError={(e) => {
+                                                const img = e.target as HTMLImageElement;
+                                                fetchImage(movie.title, movie.normalizedTitle)
+                                                    .then(url => {
+                                                        img.src = url;
+                                                    })
+                                                    .catch(() => {
+                                                        img.src = '/placeholder.jpg';
+                                                        console.error('Failed to load image for:', movie.title);
+                                                    });
+                                            }}
                                         />
                                     </div>
                                     <div className="ticket__title">
-                                        {ticket.title}
+                                        {movie.title}
                                     </div>
-                                    <Link
-                                        to={`/movies/${ticket.normalizedTitle}`}
-                                        className="ticket__see-more"
-                                    >
-                                        SEE MORE
-                                    </Link>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Right navigation button */}
                 <button
                     onClick={() => scroll('right')}
                     className={`carousel__button ${!canScrollRight ? 'carousel__button--disabled' : ''}`}
@@ -134,4 +173,4 @@ export const MovieSlider: React.FC = () => {
             </div>
         </div>
     );
-};
+};;
