@@ -1,13 +1,36 @@
+/**
+ * Movie projection management module
+ * Handles scheduling and management of movie screenings
+ * @module ProjectionManagement
+ */
 import React, { useState, useMemo } from 'react';
 import { TableLayout } from "../TableLayout/TableLayout";
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { sortItems, type SortConfig } from '../../../utils/sorting.ts';
 
+/**
+ * Movie genre data structure
+ * @interface
+ * @property {number} genreId - Unique identifier of the genre
+ * @property {string} genreName - Name of the genre
+ */
 interface Genre {
     genreId: number;
     genreName: string;
 }
 
+/**
+ * Movie data structure for projections
+ * @interface
+ * @property {number} movieId - Unique identifier of the movie
+ * @property {string} title - Movie title
+ * @property {string} description - Movie description
+ * @property {number} duration - Movie duration in minutes
+ * @property {string} releaseDate - Release date
+ * @property {Genre} genre - Movie genre information
+ * @property {string} normalizedTitle - Normalized version of the title
+ * @property {string} release - Release information
+ */
 interface Movie {
     movieId: number;
     title: string;
@@ -40,6 +63,15 @@ interface ProjectionResponse {
     availableSeats: number;
 }
 
+/**
+ * API validation error structure
+ * @interface
+ * @property {string} type - Error type
+ * @property {string} title - Error title
+ * @property {number} status - HTTP status code
+ * @property {Record<string, string[]>} errors - Validation errors by field
+ * @property {string} traceId - Trace ID for debugging
+ */
 interface ApiValidationError {
     type: string;
     title: string;
@@ -130,6 +162,16 @@ const fetchProjections = async (): Promise<Projection[]> => {
 };
 
 const api = {
+    /**
+     * Adds a new movie projection
+     * @async
+     * @param {Object} projectionData - Projection data
+     * @param {string} projectionData.screeningTime - Screening time in ISO format
+     * @param {string} projectionData.screenType - Type of screening
+     * @param {number} projectionData.cinemaHallId - ID of the cinema hall
+     * @param {string} projectionData.movieNormalizedTitle - Normalized movie title
+     * @throws {Error} When validation fails or creation fails
+     */
     addProjection: async (projectionData: {
         screeningTime: string;
         screenType: string;
@@ -180,6 +222,11 @@ const api = {
     }
 };
 
+/**
+ * Movie projection management component
+ * Provides interface for creating and managing movie projections
+ * @component
+ */
 export const ProjectionManagement = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);

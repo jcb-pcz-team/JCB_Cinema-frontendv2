@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Komponent formularza zmiany hasła.
+ */
+
 import React, { useState } from 'react';
 import { FormikProps } from 'formik';
 import { Input } from '../Input/Input';
@@ -5,15 +9,34 @@ import { Button } from '../Button/Button';
 import { useMutation } from '@tanstack/react-query';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
+/**
+ * Wartości formularza zmiany hasła
+ * @interface PasswordFormValues
+ */
 interface PasswordFormValues {
+    /** Aktualne hasło */
     currentPassword: string;
+    /** Nowe hasło */
     newPassword: string;
 }
 
+/**
+ * Props komponentu PasswordForm
+ * @interface Props
+ */
 interface Props {
+    /** Obiekt formika do zarządzania formularzem */
     formik: FormikProps<PasswordFormValues>;
+    /** Komunikat błędu formularza */
     formError: string | null;
 }
+
+/**
+ * Komponent formularza zmiany hasła
+ * @component
+ * @param {Props} props - Props komponentu
+ * @returns {JSX.Element} Formularz zmiany hasła
+ */
 
 export const PasswordForm: React.FC<Props> = ({ formik }) => {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);

@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Komponent profilu użytkownika zawierający formularze edycji danych.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -5,6 +9,11 @@ import { GeneralInfoForm } from '../GenerelInfoForm/GenerelInfoForm.tsx';
 import { EmailForm } from '../EmailForm/EmailForm.tsx';
 import { PasswordForm } from '../PasswordForm/PasswordForm.tsx';
 import './Profile.scss';
+
+/**
+ * Schemat walidacji danych ogólnych
+ * @constant
+ */
 
 const generalInfoValidation = Yup.object().shape({
     login: Yup.string().required("Login is required"),
@@ -39,6 +48,11 @@ const passwordValidation = Yup.object({
         )
 });
 
+/**
+ * Interfejs danych użytkownika
+ * @interface UserData
+ */
+
 interface UserData {
     login: string;
     email: string;
@@ -49,6 +63,12 @@ interface UserData {
     street: string;
     houseNumber: string;
 }
+
+/**
+ * Komponent profilu użytkownika
+ * @component
+ * @returns {JSX.Element} Strona profilu użytkownika
+ */
 
 export const Profile: React.FC = () => {
     const [formError, setFormError] = useState<string | null>(null);

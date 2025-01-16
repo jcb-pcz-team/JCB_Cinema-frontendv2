@@ -1,7 +1,23 @@
+/**
+ * Schedule management module
+ * Handles viewing and managing movie screening schedules
+ * @module ScheduleManagement
+ */
 import {useMemo, useState} from "react";
 import { TableLayout } from "../TableLayout/TableLayout";
 import { useQuery } from "@tanstack/react-query";
 
+/**
+ * Movie data structure
+ * @interface
+ * @property {string} title - Movie title
+ * @property {string} description - Movie description
+ * @property {number} duration - Movie duration in minutes
+ * @property {string} releaseDate - Release date
+ * @property {Object} genre - Genre information
+ * @property {string} normalizedTitle - Normalized version of title
+ * @property {string} release - Release information
+ */
 interface Movie {
     title: string;
     description: string;
@@ -15,16 +31,41 @@ interface Movie {
     release: string;
 }
 
+/**
+ * Cinema hall data structure
+ * @interface
+ * @property {number} cinemaHallId - Unique identifier of the hall
+ * @property {string} name - Name of the cinema hall
+ */
 interface CinemaHall {
     cinemaHallId: number;
     name: string;
 }
 
+/**
+ * Price information structure
+ * @interface
+ * @property {number} ammount - Price amount
+ * @property {string} currency - Currency code
+ */
 interface Price {
     ammount: number;
     currency: string;
 }
 
+/**
+ * Movie screening data structure
+ * @interface
+ * @property {number} movieProjectionId - Unique identifier of the projection
+ * @property {Movie} movie - Movie information
+ * @property {string} screeningTime - Time of the screening
+ * @property {string} screenType - Type of screening
+ * @property {CinemaHall} cinemaHall - Cinema hall information
+ * @property {string} normalizedMovieTitle - Normalized movie title
+ * @property {Price} price - Ticket price information
+ * @property {number} occupiedSeats - Number of occupied seats
+ * @property {number} availableSeats - Number of available seats
+ */
 interface Screening {
     movieProjectionId: number;
     movie: Movie;
@@ -37,11 +78,31 @@ interface Screening {
     availableSeats: number;
 }
 
+
+/**
+ * Schedule day structure containing screenings
+ * @interface
+ * @property {string} date - Date of screenings
+ * @property {Screening[]} screenings - Array of screenings for the day
+ */
 interface ScheduleDay {
     date: string;
     screenings: Screening[];
 }
 
+/**
+ * Schedule entry structure for display
+ * @interface
+ * @property {number} id - Unique identifier
+ * @property {string} date - Schedule date
+ * @property {string} hall - Cinema hall name
+ * @property {string} movieTitle - Movie title
+ * @property {string} startTime - Screening start time
+ * @property {string} endTime - Screening end time
+ * @property {number} numberOfScreenings - Number of screenings
+ * @property {number} availableSeats - Available seats
+ * @property {string} status - Current status
+ */
 interface Schedule {
     id: number;
     date: string;
@@ -94,7 +155,17 @@ const sortItems = <T extends Record<string, any>>(
     });
 };
 
+
+/**
+ * API functions for schedule management
+ */
 const api = {
+    /**
+     * Fetches all schedules from the server
+     * @async
+     * @returns {Promise<Schedule[]>} Array of schedule entries
+     * @throws {Error} When authentication fails or API request fails
+     */
     fetchSchedules: async () => {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error('Not authenticated');
@@ -128,12 +199,23 @@ const api = {
     }
 };
 
+/**
+ * Calculates the end time for a screening
+ * @param {string} startTime - Start time of the screening
+ * @param {number} duration - Duration in minutes
+ * @returns {string} End time in locale time string format
+ */
 const calculateEndTime = (startTime: string, duration: number): string => {
     const start = new Date(startTime);
     const end = new Date(start.getTime() + duration * 60000); // Convert minutes to milliseconds
     return end.toLocaleTimeString();
 };
 
+/**
+ * Schedule management component
+ * Provides interface for viewing and managing movie schedules
+ * @component
+ */
 export const ScheduleManagement = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);

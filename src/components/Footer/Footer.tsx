@@ -1,5 +1,16 @@
 import './Footer.scss';
 
+/**
+ * Footer Component
+ *
+ * Displays the website footer with:
+ * - Company logo
+ * - Description
+ * - Social media links
+ * - Copyright information
+ *
+ * @returns A React component representing the website footer
+ */
 export const Footer = () => {
     return (
         <footer className="footer">

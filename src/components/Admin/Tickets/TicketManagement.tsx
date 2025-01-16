@@ -1,18 +1,34 @@
 import { useState } from "react";
 import { TableLayout } from "../TableLayout/TableLayout";
 
+/**
+ * Represents a ticket with all its details
+ */
 interface Ticket {
+    /** Unique identifier for the ticket */
     id: number;
+    /** Movie title */
     movie: string;
+    /** Username of the ticket owner */
     user: string;
+    /** Date of the movie screening */
     date: string;
+    /** Time of the movie screening */
     time: string;
+    /** Cinema hall for the screening */
     hall: string;
+    /** Seat number */
     seat: string;
+    /** Current status of the ticket (e.g., Paid, Reserved) */
     status: string;
+    /** Price of the ticket */
     price: string;
 }
 
+/**
+ * Initial form state for creating or editing a ticket
+ * Omits the 'id' field as it's auto-generated
+ */
 const INITIAL_TICKET_FORM: Omit<Ticket, 'id'> = {
     movie: '',
     user: '',
@@ -24,7 +40,18 @@ const INITIAL_TICKET_FORM: Omit<Ticket, 'id'> = {
     price: ''
 };
 
+
+/**
+ * Ticket Management component for administering movie tickets
+ *
+ * @returns A React component for managing ticket bookings
+ */
 export const TicketManagement = () => {
+
+    /**
+     * State to store the list of tickets
+     * Initialized with some sample tickets
+     */
     const [tickets, setTickets] = useState<Ticket[]>([
         {
             id: 1,
@@ -64,14 +91,27 @@ export const TicketManagement = () => {
         { value: 'price', label: 'Price' }
     ];
 
+    /**
+     * Handles searching through tickets
+     * @param searchTerm - The search query entered by the user
+     */
     const handleSearch = (searchTerm: string) => {
         console.log('Searching tickets:', searchTerm);
     };
 
+    /**
+     * Handles sorting tickets
+     * @param sortBy - The field to sort tickets by
+     */
     const handleSort = (sortBy: string) => {
         console.log('Sorting tickets by:', sortBy);
     };
 
+
+    /**
+     * Handles input changes in the ticket form
+     * @param e - The input change event
+     */
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -80,6 +120,10 @@ export const TicketManagement = () => {
         }));
     };
 
+    /**
+     * Submits the ticket form, either adding a new ticket or updating an existing one
+     * @param e - The form submission event
+     */
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingId) {
@@ -96,22 +140,32 @@ export const TicketManagement = () => {
         handleCloseForm();
     };
 
+    /**
+     * Prepares a ticket for editing
+     * @param ticket - The ticket to be edited
+     */
     const handleEdit = (ticket: Ticket) => {
         setFormData(ticket);
         setEditingId(ticket.id);
         setIsFormVisible(true);
     };
 
+    /**
+     * Deletes a ticket from the list
+     * @param id - The ID of the ticket to delete
+     */
     const handleDelete = (id: number) => {
         setTickets(prev => prev.filter(ticket => ticket.id !== id));
     };
 
+    /** Closes the ticket form and resets form state */
     const handleCloseForm = () => {
         setFormData(INITIAL_TICKET_FORM);
         setEditingId(null);
         setIsFormVisible(false);
     };
 
+    /** Opens the form for adding a new ticket */
     const handleAddNew = () => {
         setIsFormVisible(true);
     };

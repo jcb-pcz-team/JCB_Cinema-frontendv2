@@ -19,7 +19,17 @@ export const EmailForm: React.FC<Props> = ({ formik, onEmailChange }) => {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const queryClient = useQueryClient();
 
+    /**
+     * Mutation for changing email address
+     * Handles API call, error management, and success scenarios
+     */
     const mutation = useMutation({
+        /**
+         * Mutation function to send email change request to the server
+         * @param data - Email change form values
+         * @returns Server response
+         * @throws Error if email change fails
+         */
         mutationFn: async (data: EmailFormValues) => {
             const response = await fetch('https://localhost:7101/api/users/change-email', {
                 method: 'PUT',
@@ -58,6 +68,12 @@ export const EmailForm: React.FC<Props> = ({ formik, onEmailChange }) => {
 
             return errorData;
         },
+        /**
+         * Success handler for email change mutation
+         * Resets form, updates UI, and invalidates user data cache
+         * @param _ - Unused first parameter (mutation result)
+         * @param variables - Mutation input variables
+         */
         onSuccess: (_, variables) => {
             formik.resetForm({
                 values: {
@@ -70,11 +86,21 @@ export const EmailForm: React.FC<Props> = ({ formik, onEmailChange }) => {
             queryClient.invalidateQueries({ queryKey: ['userData'] });
             setTimeout(() => setSuccessMessage(null), 3000);
         },
+        /**
+         * Error handler for email change mutation
+         * Sets form status with error message
+         * @param error - Error object from mutation
+         */
         onError: (error: Error) => {
             formik.setStatus({ error: error.message });
         }
     });
 
+    /**
+     * Handles form submission
+     * Triggers email change mutation if form is valid
+     * @param e - Form submission event
+     */
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (formik.isValid && !formik.isSubmitting) {

@@ -1,18 +1,40 @@
-// Generic type for sortable items
+/**
+ * @fileoverview Funkcje pomocnicze do sortowania danych w aplikacji.
+ */
+
+/**
+ * Typ generyczny dla elementów, które można sortować
+ * @template T
+ */
 type SortableItem = {
     [key: string]: any;
 };
 
-// Sort direction type
+/**
+ * Kierunek sortowania
+ * @type {('asc' | 'desc')}
+ */
 export type SortDirection = 'asc' | 'desc';
 
-// Sort configuration type
+/**
+ * Konfiguracja sortowania
+ * @interface
+ */
 export type SortConfig = {
+    /** Klucz po którym sortujemy */
     key: string;
+    /** Kierunek sortowania */
     direction: SortDirection;
 };
 
-// Helper function to compare values for sorting
+/**
+ * Porównuje dwie wartości dla celów sortowania
+ * @private
+ * @param {any} a - Pierwsza wartość do porównania
+ * @param {any} b - Druga wartość do porównania
+ * @param {SortDirection} direction - Kierunek sortowania
+ * @returns {number} Wynik porównania (-1, 0, lub 1)
+ */
 const compareValues = (a: any, b: any, direction: SortDirection): number => {
     // Handle null/undefined values
     if (a === null || a === undefined) return direction === 'asc' ? -1 : 1;
@@ -42,7 +64,20 @@ const compareValues = (a: any, b: any, direction: SortDirection): number => {
         : String(b).localeCompare(String(a));
 };
 
-// Main sorting function
+/**
+ * Sortuje tablicę elementów według zadanej konfiguracji
+ * @template T
+ * @param {T[]} items - Tablica elementów do posortowania
+ * @param {SortConfig | null} sortConfig - Konfiguracja sortowania
+ * @returns {T[]} Posortowana tablica elementów
+ *
+ * @example
+ * ```typescript
+ * const items = [{name: 'B'}, {name: 'A'}];
+ * const sorted = sortItems(items, { key: 'name', direction: 'asc' });
+ * // Returns: [{name: 'A'}, {name: 'B'}]
+ * ```
+ */
 export const sortItems = <T extends SortableItem>(
     items: T[],
     sortConfig: SortConfig | null

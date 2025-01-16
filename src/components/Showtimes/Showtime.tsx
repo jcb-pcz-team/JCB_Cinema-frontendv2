@@ -1,179 +1,168 @@
-import {Link} from "react-router-dom";
+import React, { useState, useMemo } from 'react';
+import { Link } from "react-router-dom";
+import { useQuery } from '@tanstack/react-query';
+import "./Showtime.scss";
 
 type DayCode = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
 type ScreeningFormat = 'All' | '2D' | '3D' | 'IMAX' | '4DX';
-type Genre = 'All' | 'Action' | 'Sci-Fi' | 'Comedy' | 'Horror' | 'Drama';
+type Genre = 'All' | 'Action' | 'Drama' | 'Science Fiction' | 'War';
 
 interface Day {
     short: DayCode;
     full: string;
-}
-
-interface Showtime {
-    [key: string]: string[];
+    date: string;
 }
 
 interface Movie {
-    id: number;
     title: string;
-    genre: Genre[];
-    duration: string;
-    format: ScreeningFormat;
-    showtimes: Showtime;
-    poster: string;
+    description: string;
+    duration: number;
+    genre: {
+        genreName: string;
+    };
+    normalizedTitle: string;
 }
 
-import React, { useState } from 'react';
-import './Showtime.scss';
+interface Screening {
+    movieProjectionId: number;
+    movie: Movie;
+    screeningTime: string;
+    screenType: string;
+    cinemaHall: {
+        name: string;
+    };
+    price: {
+        ammount: number;
+        currency: string;
+    };
+    availableSeats: number;
+}
+
+interface ScheduleDay {
+    date: string;
+    screenings: Screening[];
+}
 
 export const Showtime: React.FC = () => {
-    const days: Day[] = [
-        { short: 'Mon', full: 'Monday' },
-        { short: 'Tue', full: 'Tuesday' },
-        { short: 'Wed', full: 'Wednesday' },
-        { short: 'Thu', full: 'Thursday' },
-        { short: 'Fri', full: 'Friday' },
-        { short: 'Sat', full: 'Saturday' },
-        { short: 'Sun', full: 'Sunday' }
-    ];
-
-    const screeningTypes: ScreeningFormat[] = ['All', '2D', '3D', 'IMAX', '4DX'];
-    const genres: Genre[] = ['All', 'Action', 'Sci-Fi', 'Comedy', 'Horror', 'Drama'];
-
-    const [selectedDay, setSelectedDay] = useState<DayCode>('Mon');
+    const [selectedDay, setSelectedDay] = useState<string>(new Date().toISOString().split('T')[0]);
     const [selectedType, setSelectedType] = useState<ScreeningFormat>('All');
     const [selectedGenre, setSelectedGenre] = useState<Genre>('All');
 
-    const moviesData: Movie[] = [
-        {
-            id: 1,
-            title: "SPIDER-MAN: HOMECOMING",
-            genre: ["Action", "Sci-Fi"],
-            duration: "125 min",
-            format: "2D",
-            showtimes: {
-                Mon: ["12:00", "14:00", "15:00", "21:00"],
-                Tue: ["13:00", "16:00", "19:00"],
-                Wed: ["12:00", "15:00", "21:00"],
-            },
-            poster: "https://fr.web.img2.acsta.net/pictures/17/05/30/13/13/145510.jpg"
-        },
-        {
-            id: 2,
-            title: "AVENGERS: INFINITY WAR",
-            genre: ["Action", "Sci-Fi"],
-            duration: "149 min",
-            format: "3D",
-            showtimes: {
-                Mon: ["11:00", "14:30", "18:00"],
-                Tue: ["12:30", "16:30", "20:00"],
-                Wed: ["13:00", "16:00", "19:30"],
-            },
-            poster: "https://m.media-amazon.com/images/S/pv-target-images/3307ca0df325da35692128a6703a4bff5a5cf8c60bb719f221cadd6c03834358.jpg"
-        },
-        {
-            id: 3,
-            title: "BLACK WIDOW",
-            genre: ["Action", "Drama"],
-            duration: "133 min",
-            format: "IMAX",
-            showtimes: {
-                Mon: ["13:00", "16:00", "19:00"],
-                Tue: ["14:00", "17:00", "20:00"],
-                Wed: ["12:00", "15:00", "18:00"],
-            },
-            poster: "https://lumiere-a.akamaihd.net/v1/images/image_b97b56f3.jpeg?region=0,0,540,810"
-        },
-        {
-            id: 4,
-            title: "Interstellar",
-            genre: ["Sci-Fi"],
-            duration: "169 min",
-            format: "2D",
-            showtimes: {
-                Mon: ["12:00", "14:00", "15:00", "21:00"],
-                Tue: ["13:00", "16:00", "19:00"],
-                Wed: ["12:00", "15:00", "21:00"],
-            },
-            poster: "src/assets/images/background-interstellar.png"
-        },
-    ];
+    // Get next 7 days for the calendar
+    const days = useMemo((): Day[] => {
+        const days: Day[] = [];
+        const today = new Date();
 
-    const filteredMovies = moviesData.filter(movie => {
-        const matchesType = selectedType === 'All' || movie.format === selectedType;
-        const matchesGenre = selectedGenre === 'All' || movie.genre.includes(selectedGenre);
-        const hasShowtimesForDay = movie.showtimes[selectedDay]?.length > 0;
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + i);
+            const dayCode = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()] as DayCode;
+            const fullDay = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
 
-        return matchesType && matchesGenre && hasShowtimesForDay;
+            days.push({
+                short: dayCode,
+                full: fullDay,
+                date: date.toISOString().split('T')[0]
+            });
+        }
+        return days;
+    }, []);
+
+    // Fetch schedules using React Query with date range
+    const { data: schedules = [], isLoading, error } = useQuery<ScheduleDay[]>({
+        queryKey: ['schedules', selectedDay],
+        queryFn: async () => {
+            const startDate = new Date(selectedDay);
+            const endDate = new Date(selectedDay);
+            endDate.setDate(endDate.getDate() + 6);
+
+            const dateFrom = startDate.toISOString().split('T')[0];
+            const dateTo = endDate.toISOString().split('T')[0];
+
+            const response = await fetch(
+                `https://localhost:7101/api/schedules?DateFrom=${dateFrom}&DateTo=${dateTo}`
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to fetch schedules');
+            }
+            return response.json();
+        },
+        staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+        retry: 2
     });
 
-    const handleDaySelect = (day: DayCode) => {
-        setSelectedDay(day);
+    const screeningTypes: ScreeningFormat[] = ['All', '2D', '3D', 'IMAX', '4DX'];
+    const genres: Genre[] = ['All', 'Action', 'Drama', 'Science Fiction', 'War'];
+
+    // Filter and sort screenings based on selected criteria
+    const filteredScreenings = useMemo(() => {
+        const daySchedule = schedules.find(schedule => schedule.date === selectedDay);
+        if (!daySchedule) return [];
+
+        return daySchedule.screenings
+            .filter(screening => {
+                const matchesType = selectedType === 'All' || screening.screenType === selectedType;
+                const matchesGenre = selectedGenre === 'All' || screening.movie.genre.genreName === selectedGenre;
+                return matchesType && matchesGenre;
+            })
+            .sort((a, b) => new Date(a.screeningTime).getTime() - new Date(b.screeningTime).getTime());
+    }, [schedules, selectedDay, selectedType, selectedGenre]);
+
+    const formatPrice = (amount: number, currency: string): string => {
+        return `${(amount / 100).toFixed(2)} ${currency}`;
     };
 
-    const handleTypeSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedType(event.target.value as ScreeningFormat);
-    };
+    if (error) {
+        return (
+            <div className="schedule">
+                <div className="schedule__empty-message">
+                    Failed to load schedules. Please try again later.
+                </div>
+            </div>
+        );
+    }
 
-    const handleGenreSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedGenre(event.target.value as Genre);
-    };
-
-    const getNormalizedTitle = (title: string) => {
-        return title
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')  // zamienia wszystkie znaki specjalne i spacje na myślnik
-            .replace(/-+/g, '-')          // zamienia wielokrotne myślniki na pojedynczy
-            .replace(/^-+|-+$/g, '');     // usuwa myślniki z początku i końca
-    };
+    if (isLoading) {
+        return (
+            <div className="schedule">
+                <div className="schedule__empty-message">
+                    Loading schedules...
+                </div>
+            </div>
+        );
+    }
 
     return (
         <section className="schedule">
             <div className="schedule__container">
                 <header className="schedule__header">
                     <h2 className="schedule__title">
-                        <span className="schedule__title-highlight">S</span>chowtimes
+                        <span className="schedule__title-highlight">S</span>howtimes
                     </h2>
 
                     <div className="schedule__filters">
                         <div className="schedule__days">
                             {days.map((day) => (
                                 <button
-                                    key={day.short}
+                                    key={day.date}
                                     className={`schedule__day-btn ${
-                                        selectedDay === day.short ? 'schedule__day-btn--active' : ''
+                                        selectedDay === day.date ? 'schedule__day-btn--active' : ''
                                     }`}
                                     title={day.full}
-                                    onClick={() => handleDaySelect(day.short)}
+                                    onClick={() => setSelectedDay(day.date)}
                                 >
                                     {day.short}
                                 </button>
                             ))}
                         </div>
 
-                        <button className="schedule__calendar-btn">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                            </svg>
-                        </button>
-
                         <div className="schedule__select-group">
                             <select
                                 className="schedule__select"
                                 value={selectedType}
-                                onChange={handleTypeSelect}
+                                onChange={(e) => setSelectedType(e.target.value as ScreeningFormat)}
                             >
                                 {screeningTypes.map(type => (
                                     <option key={type} value={type}>{type}</option>
@@ -183,7 +172,7 @@ export const Showtime: React.FC = () => {
                             <select
                                 className="schedule__select"
                                 value={selectedGenre}
-                                onChange={handleGenreSelect}
+                                onChange={(e) => setSelectedGenre(e.target.value as Genre)}
                             >
                                 {genres.map(genre => (
                                     <option key={genre} value={genre}>{genre}</option>
@@ -194,30 +183,47 @@ export const Showtime: React.FC = () => {
                 </header>
 
                 <div className="schedule__movie-list">
-                    {filteredMovies.length === 0 ? (
+                    {filteredScreenings.length === 0 ? (
                         <div className="schedule__empty-message">
                             No movies match your selected criteria
                         </div>
                     ) : (
-                        filteredMovies.map((movie) => (
-                            <div key={movie.id} className="movie-card">
+                        filteredScreenings.map((screening) => (
+                            <div key={screening.movieProjectionId} className="movie-card">
                                 <div className="movie-card__poster">
-                                    <Link to={`/movies/${getNormalizedTitle(movie.title)}`}>
-                                        <img src={movie.poster} alt={movie.title}/>
+                                    <Link to={`/movies/${screening.movie.normalizedTitle}`}>
+                                        <img
+                                            src={`/api/photos/${screening.movie.title}`}
+                                            alt={screening.movie.title}
+                                        />
                                     </Link>
                                 </div>
                                 <div className="movie-card__content">
-                                    <h2 className="movie-card__title">{movie.title}</h2>
+                                    <h2 className="movie-card__title">{screening.movie.title}</h2>
                                     <div className="movie-card__info">
-                                        {movie.genre.join(', ')} | {movie.duration}
+                                        {screening.movie.genre.genreName} | {screening.movie.duration} min
                                     </div>
-                                    <div className="movie-card__format">{movie.format}</div>
+                                    <div className="movie-card__format">
+                                        {screening.screenType} | {screening.cinemaHall.name} |
+                                        Available seats: {screening.availableSeats}
+                                    </div>
                                     <div className="movie-card__showtimes">
-                                        {movie.showtimes[selectedDay]?.map((time) => (
-                                            <button key={time} className="movie-card__time-btn">
-                                                {time}
-                                            </button>
-                                        ))}
+                                        <Link
+                                            to={`/booking/${encodeURIComponent(screening.movie.title)}`}
+                                            className="movie-card__time-btn"
+                                            state={{
+                                                showtime: new Date(screening.screeningTime).toLocaleTimeString([], {
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                }),
+                                                movieProjectionId: screening.movieProjectionId
+                                            }}
+                                        >
+                                            {new Date(screening.screeningTime).toLocaleTimeString([], {
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
+                                        </Link>
                                     </div>
                                 </div>
                             </div>

@@ -1,26 +1,55 @@
 import React from 'react';
 import "./TableLayout.scss";
 
+/**
+ * Represents a sorting option for the table
+ */
 interface SortOption {
+    /** The value used for sorting */
     value: string;
+    /** The label displayed for the sort option */
     label: string;
 }
 
+/**
+ * Props for the TableLayout component
+ */
 interface TableLayoutProps {
+    /** The title of the table */
     title: string;
+    /** Child components to be rendered within the table layout */
     children: React.ReactNode;
+    /**
+     * Callback function for search functionality
+     * @param value - The search term entered by the user
+     */
     onSearch: (value: string) => void;
+    /**
+     * Callback function for sorting functionality
+     * @param value - The sort option selected by the user
+     */
     onSort: (value: string) => void;
+    /** Available sorting options for the table */
     sortOptions: SortOption[];
-    onAddNew?: () => void; // Optional callback for Add New button
+    /**
+     * Optional callback for adding a new item
+     * @returns void
+     */
+    onAddNew?: () => void;
 }
 
+/**
+ * A reusable layout component for tables with search and sort functionality
+ *
+ * @param props - The component props
+ * @returns A React component representing the table layout
+ */
 export const TableLayout: React.FC<TableLayoutProps> = ({
                                                             title,
                                                             children,
                                                             onSearch,
-                                                            // onSort,
-                                                            // sortOptions,
+                                                            onSort,
+                                                            sortOptions,
                                                             onAddNew
                                                         }) => {
     return (
@@ -46,17 +75,19 @@ export const TableLayout: React.FC<TableLayoutProps> = ({
                         className="filters__search"
                         onChange={(e) => onSearch(e.target.value)}
                     />
-                    {/*<select*/}
-                    {/*    className="filters__select"*/}
-                    {/*    onChange={(e) => onSort(e.target.value)}*/}
-                    {/*>*/}
-                    {/*    /!*<option value="">Sort by...</option>*!/*/}
-                    {/*    {sortOptions.map(option => (*/}
-                    {/*        <option key={option.value} value={option.value}>*/}
-                    {/*            {option.label}*/}
-                    {/*        </option>*/}
-                    {/*    ))}*/}
-                    {/*</select>*/}
+                    {/*{sortOptions && (*/}
+                    {/*    <select*/}
+                    {/*        className="filters__select"*/}
+                    {/*        onChange={(e) => onSort(e.target.value)}*/}
+                    {/*    >*/}
+                    {/*        <option value="">Sort by...</option>*/}
+                    {/*        {sortOptions.map(option => (*/}
+                    {/*            <option key={option.value} value={option.value}>*/}
+                    {/*                {option.label}*/}
+                    {/*            </option>*/}
+                    {/*        ))}*/}
+                    {/*    </select>*/}
+                    {/*)}*/}
                 </div>
             </div>
             {children}

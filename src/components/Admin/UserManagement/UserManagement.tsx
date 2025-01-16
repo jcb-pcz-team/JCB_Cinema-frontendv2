@@ -2,26 +2,50 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface User {
+    /** User's login/username */
     login: string;
+    /** User's email address */
     email: string;
+    /** User's first name */
     firstName: string;
+    /** User's last name */
     lastName: string;
+    /** User's street address */
     street: string;
+    /** User's house number */
     houseNumber: string;
+    /** User's phone number */
     phoneNumber: number;
+    /** Dial code for the phone number */
     dialCode: string;
 }
 
+/**
+ * Represents a user's booking details
+ */
 interface Booking {
+    /** Title of the movie */
     movieTitle: string;
+    /** Type of screen (e.g., 2D, 3D) */
     screenType: string;
+    /** Date and time of the screening */
     screenignTime: string;
+    /** Cinema hall for the screening */
     cienemaHall: string;
+    /** Seat number for the booking */
     seatNumber: number;
-    // bookingURL: string;
 }
 
+/**
+ * API methods for user and booking management
+ */
 const api = {
+    /**
+     * Fetches user details from the server
+     * @param login - The username to search for
+     * @returns A promise resolving to user details
+     * @throws Error if not authenticated or user not found
+     */
     fetchUser: async (login: string) => {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error('Not authenticated');
@@ -42,6 +66,13 @@ const api = {
         return data;
     },
 
+    /**
+     * Fetches bookings for a specific user
+     * @param login - The user's login
+     * @param email - The user's email
+     * @returns A promise resolving to user's bookings
+     * @throws Error if not authenticated or bookings fetch fails
+     */
     fetchBookings: async (login: string, email: string) => {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error('Not authenticated');
@@ -61,6 +92,12 @@ const api = {
         return data;
     },
 
+    /**
+     * Updates user details on the server
+     * @param userData - The updated user information
+     * @returns A promise resolving to the updated user details
+     * @throws Error if update fails
+     */
     updateUserDetails: async (userData: {
         login: string;
         firstName: string;
@@ -170,6 +207,12 @@ const api = {
     }
 };
 
+
+/**
+ * User Management component for administering user accounts and bookings
+ *
+ * @returns A React component for managing user information
+ */
 export const UserManagement = () => {
     const queryClient = useQueryClient();
     const [searchUsername, setSearchUsername] = useState('');

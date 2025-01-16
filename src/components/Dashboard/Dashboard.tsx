@@ -3,7 +3,19 @@ import React from 'react';
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { MainLayout } from "../../layouts/MainLayout/MainLayout.tsx";
 
+/**
+ * Dashboard component for user account management
+ *
+ * Provides a navigation menu for different user account sections
+ * and renders child routes using React Router's Outlet
+ *
+ * @returns A React component displaying the user dashboard
+ */
 export const Dashboard: React.FC = () => {
+    /**
+     * Hook to access the current location/route
+     * Used for applying active state to navigation links
+     */
     const location = useLocation();
 
     return (

@@ -2,6 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import './FeaturedMovie.scss';
 
+
+/**
+ * Featured Movie Component
+ *
+ * Displays information about an upcoming movie with a countdown timer
+ * Shows movie details such as title, genre, rating, and release information
+ *
+ * @returns A React component showcasing a featured upcoming movie
+ */
 export const FeaturedMovie : React.FC = () => {
     const [timeLeft, setTimeLeft] = useState({
         days: 280,
@@ -10,6 +19,11 @@ export const FeaturedMovie : React.FC = () => {
         seconds: 2
     });
 
+    /**
+     * Effect hook to create a countdown timer
+     * Updates the time left every second
+     * Decrements days, hours, minutes, and seconds in order
+     */
     useEffect(() => {
         const timer = setInterval(() => {
             setTimeLeft(prevTime => {

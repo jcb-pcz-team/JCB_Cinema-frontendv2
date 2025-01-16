@@ -4,7 +4,27 @@ import {useFormik} from "formik";
 import * as Yup from "yup";
 import {Button} from "../Button/Button.tsx";
 
+/**
+ * Registration Form Component
+ *
+ * Provides a comprehensive user registration form with:
+ * - Personal information inputs
+ * - Contact details
+ * - Address information
+ * - Password creation
+ *
+ * Uses Formik for form management and Yup for validation
+ *
+ * @returns A React component for user registration
+ */
 export const FormRegister = () => {
+    /**
+     * Formik configuration for registration form
+     * Includes:
+     * - Initial form values
+     * - Validation schema
+     * - Form submission handler
+     */
     const formik = useFormik<{
         firstName: string;
         lastName: string;
@@ -16,6 +36,7 @@ export const FormRegister = () => {
         password: string;
         confirmPassword: string;
         }>({
+        // Initial form values with empty strings
         initialValues: {
             firstName: "",
             lastName: "",
@@ -27,6 +48,7 @@ export const FormRegister = () => {
             password: "",
             confirmPassword: "",
         },
+        // Validation rules using Yup
         validationSchema: Yup.object({
             firstName: Yup.string()
                 .required("First Name is required"),

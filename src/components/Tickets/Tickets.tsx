@@ -1,20 +1,46 @@
+/**
+ * @fileoverview Komponent wyświetlający listę biletów użytkownika.
+ */
+
 import "./Tickets.scss";
 import React, { useEffect, useState } from "react";
 import { Ticket } from "../Ticket/Ticket.tsx";
 
+/**
+ * Interfejs danych biletu
+ * @interface TicketData
+ */
+
 interface TicketData {
+    /** Tytuł filmu */
     movieTitle: string;
+    /** Typ projekcji */
     screenType: string;
+    /** Czas seansu */
     screeningTime: string;
+    /** Nazwa sali kinowej */
     cinemaHall: string;
+    /** Numer miejsca */
     seatNumber: number;
+    /** URL do szczegółów rezerwacji */
     bookingURL: string;
 }
+
+/**
+ * Komponent wyświetlający listę biletów użytkownika
+ * @component
+ * @returns {JSX.Element} Komponent listy biletów
+ */
 
 export const Tickets: React.FC = () => {
     const [tickets, setTickets] = useState<TicketData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
+
+    /**
+     * Pobiera bilety użytkownika z API
+     * @async
+     */
     useEffect(() => {
         const fetchTickets = async () => {
             try {

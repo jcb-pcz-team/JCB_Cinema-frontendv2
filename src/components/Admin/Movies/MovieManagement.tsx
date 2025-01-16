@@ -1,8 +1,23 @@
+/**
+ * Movie management module providing CRUD operations for movies.
+ * @module MovieManagement
+ */
 import React, { useState, useMemo } from 'react';
 import { TableLayout } from '../TableLayout/TableLayout';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { sortItems, type SortConfig } from '../../../utils/sorting';
 
+/**
+ * Movie data structure
+ * @interface
+ * @property {number} id - Unique identifier of the movie
+ * @property {string} title - Movie title
+ * @property {string} description - Movie description
+ * @property {number} duration - Movie duration in minutes
+ * @property {string} releaseDate - Release date of the movie
+ * @property {string} genre - Movie genre
+ * @property {string} [posterUrl] - Optional URL to movie poster
+ */
 interface Movie {
     id: number;
     title: string;
@@ -13,6 +28,13 @@ interface Movie {
     posterUrl?: string;
 }
 
+/**
+ * Form data structure for movie creation/editing
+ * @interface
+ * @extends {Omit<Movie, 'id' | 'posterUrl'>}
+ * @property {string} posterDescription - Description of the movie poster
+ * @property {File} [posterFile] - Optional poster image file
+ */
 interface MovieFormData {
     title: string;
     description: string;
@@ -23,6 +45,10 @@ interface MovieFormData {
     posterFile?: File;
 }
 
+/**
+ * Initial state for the movie form
+ * @constant
+ */
 const INITIAL_FORM_STATE: MovieFormData = {
     title: '',
     description: '',
@@ -32,9 +58,18 @@ const INITIAL_FORM_STATE: MovieFormData = {
     posterDescription: '',
 };
 
+/**
+ * API functions for movie management
+ */
 // API functions
 const api = {
     // Fetch all movies
+    /**
+     * Fetches all movies from the server
+     * @async
+     * @returns {Promise<Movie[]>} Array of movies
+     * @throws {Error} When authentication fails or API request fails
+     */
     fetchMovies: async (): Promise<Movie[]> => {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error('Not authenticated');
@@ -60,6 +95,12 @@ const api = {
     },
 
     // Add new movie with poster
+    /**
+     * Adds a new movie with optional poster
+     * @async
+     * @param {MovieFormData} formData - Movie data with optional poster
+     * @throws {Error} When upload fails or movie creation fails
+     */
     addMovie: async (formData: MovieFormData): Promise<void> => {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error('Not authenticated');
@@ -126,6 +167,12 @@ const api = {
     },
 
     // Delete movie
+    /**
+     * Deletes a movie by ID
+     * @async
+     * @param {number} id - Movie ID to delete
+     * @throws {Error} When deletion fails
+     */
     deleteMovie: async (id: number): Promise<void> => {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error('Not authenticated');
@@ -141,6 +188,11 @@ const api = {
     }
 };
 
+/**
+ * Movie management component
+ * Provides interface for creating, viewing, and deleting movies
+ * @component
+ */
 export const MovieManagement: React.FC = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [formData, setFormData] = useState<MovieFormData>(INITIAL_FORM_STATE);

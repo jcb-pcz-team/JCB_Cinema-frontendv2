@@ -1,0 +1,10 @@
+{
+  "entryPoints": ["./src"],
+  "entryPointStrategy": "expand",
+  "out": "docs",
+  "exclude": ["**/node_modules/**", "**/*.spec.ts", "**/*.test.ts"],
+  "excludePrivate": true,
+  "name": "Dokumentacja Kina",
+  "skipErrorChecking": true,
+  "disableSources": true
+}

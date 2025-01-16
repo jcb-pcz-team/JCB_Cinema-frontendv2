@@ -1,17 +1,39 @@
+/**
+ * Cinema hall management module providing CRUD operations for cinema halls.
+ * @module HallManagement
+ */
 import { useState, useMemo } from "react";
 import { TableLayout } from "../TableLayout/TableLayout";
 import { useQuery } from "@tanstack/react-query";
 
+/**
+ * Configuration for sorting table data
+ * @interface
+ * @property {string} key - Column key to sort by
+ * @property {'asc' | 'desc'} direction - Sort direction
+ */
 interface SortConfig {
     key: string;
     direction: 'asc' | 'desc';
 }
 
+/**
+ * Cinema hall data structure
+ * @interface
+ * @property {number} id - Unique identifier of the hall
+ * @property {string} name - Name of the cinema hall
+ */
 interface Hall {
     id: number;
     name: string;
 }
 
+/**
+ * API response structure for cinema hall data
+ * @interface
+ * @property {number} cinemaHallId - Unique identifier from the API
+ * @property {string} name - Name of the cinema hall
+ */
 interface HallResponse {
     cinemaHallId: number;
     name: string;
@@ -21,6 +43,13 @@ const INITIAL_HALL_FORM: Omit<Hall, 'id'> = {
     name: ''
 };
 
+/**
+ * Generic sorting function for table data
+ * @template T
+ * @param {T[]} items - Array of items to sort
+ * @param {SortConfig | null} config - Sorting configuration
+ * @returns {T[]} Sorted array of items
+ */
 const sortItems = <T extends Record<string, any>>(
     items: T[],
     config: SortConfig | null
@@ -38,7 +67,16 @@ const sortItems = <T extends Record<string, any>>(
     });
 };
 
+/**
+ * API functions for hall management
+ */
 const api = {
+    /**
+     * Fetches all cinema halls from the server
+     * @async
+     * @returns {Promise<Hall[]>} Array of cinema halls
+     * @throws {Error} When authentication fails or API request fails
+     */
     fetchHalls: async () => {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error('Not authenticated');
