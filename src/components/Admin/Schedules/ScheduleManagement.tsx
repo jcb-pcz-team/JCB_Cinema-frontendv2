@@ -451,7 +451,6 @@ export const ScheduleManagement = () => {
                     <th onClick={() => handleSort('status')}>
                         Status {sortConfig?.key === 'status' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                     </th>
-                    <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
