@@ -1,8 +1,4 @@
-/**
- * @fileoverview Komponent do wyboru miejsc w sali kinowej.
- */
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '../../components/Button/Button';
@@ -10,52 +6,12 @@ import { MainLayout } from '../../layouts/MainLayout/MainLayout';
 import { BookingSummary } from '../BookingSummary/BookingSummary';
 import "./SeatSelection.scss";
 
-/**
- * Enum reprezentujący możliwe statusy miejsca
- * @enum {number}
- */
 enum SeatStatusEnum {
     Available = 0,
-    Occupied = 1,
-    Reservation = 2
+    Reservation = 1,    // Status po POST /api/bookings
+    Occupied = 2        // Status po PUT /api/bookings/confirm
 }
 
-/**
- * Interfejs statusu miejsca z API
- * @interface SeatStatus
- */
-interface SeatStatus {
-    seatId: number;
-    status: number;
-}
-
-/**
- * Interfejs projekcji filmu z API
- * @interface MovieProjection
- */
-interface MovieProjection {
-    movieProjectionId: number;
-    movie: {
-        title: string;
-        description: string;
-        duration: number;
-    };
-    screeningTime: string;
-    screenType: string;
-    cinemaHall: {
-        cinemaHallId: number;
-        name: string;
-    };
-    price: {
-        ammount: number;
-        currency: string;
-    };
-}
-
-/**
- * Props dla pojedynczego miejsca
- * @interface SeatProps
- */
 interface SeatProps {
     id: number;
     row: number;
@@ -63,10 +19,89 @@ interface SeatProps {
     status: SeatStatusEnum;
 }
 
-// Stałe konfiguracyjne
-const BASE_SEAT_ID = 350; // ID początkowe z API
+interface ApiSeat {
+    seatId: number;
+    status: number;
+}
+
 const ROWS = 5;
 const SEATS_PER_ROW = 5;
+const SELECTION_TIMEOUT = 5 * 60 * 1000;
+
+// Mock data for development
+const mockProjection = {
+    movieProjectionId: 1,
+    movie: {
+        title: "Sample Movie",
+        description: "Sample Description",
+        duration: 120
+    },
+    screeningTime: "2024-01-21T20:00:00",
+    screenType: "2D",
+    cinemaHall: {
+        cinemaHallId: 1,
+        name: "Hall 1"
+    },
+    price: {
+        ammount: 1500,
+        currency: "USD"
+    }
+};
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:7101';
+
+const fetchSeats = async (movieProjectionId: number): Promise<ApiSeat[]> => {
+    try {
+        const authToken = localStorage.getItem('authToken');
+        const response = await fetch(`${API_BASE_URL}/api/moviesprojection/${movieProjectionId}/seats`, {
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const text = await response.text();
+        console.log('API Response:', text);
+
+        try {
+            return JSON.parse(text);
+        } catch (parseError) {
+            console.error('JSON Parse Error:', parseError);
+            throw new Error(`Failed to parse response: ${text.substring(0, 100)}...`);
+        }
+    } catch (error) {
+        console.error('Fetch Error:', error);
+        throw error;
+    }
+};
+
+const transformSeatsData = (seatsData: ApiSeat[]): SeatProps[][] => {
+    // Find the starting ID from the API response
+    const sortedSeats = [...seatsData].sort((a, b) => a.seatId - b.seatId);
+    const startingSeatId = sortedSeats[0]?.seatId || 0;
+
+    const seatRows: SeatProps[][] = [];
+    for (let row = 0; row < ROWS; row++) {
+        const rowSeats: SeatProps[] = [];
+        for (let seatInRow = 0; seatInRow < SEATS_PER_ROW; seatInRow++) {
+            const currentSeatId = startingSeatId + (row * SEATS_PER_ROW + seatInRow);
+            const apiSeat = seatsData.find(s => s.seatId === currentSeatId);
+
+            rowSeats.push({
+                id: currentSeatId,
+                row: row + 1,
+                number: seatInRow + 1,
+                status: apiSeat ? apiSeat.status : SeatStatusEnum.Occupied
+            });
+        }
+        seatRows.push(rowSeats);
+    }
+    return seatRows;
+};
 
 export const SeatSelection: React.FC = () => {
     const { movieTitle } = useParams<{ movieTitle: string }>();
@@ -75,144 +110,186 @@ export const SeatSelection: React.FC = () => {
     const { showtime, movieProjectionId } = location.state || {};
 
     const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
+    const [bookingIds, setBookingIds] = useState<{ [key: number]: string }>({});
     const [showSummary, setShowSummary] = useState(false);
+    const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+    const [selectionExpired, setSelectionExpired] = useState(false);
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            navigate('/login', { state: { from: location.pathname } });
-            throw new Error('Not authenticated');
-        }
-
-        return {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        };
-    };
-
-    // Fetch seats status
-    const { data: seatsStatus = [], error: seatsError } = useQuery<SeatStatus[]>({
+    // Fetch seats using React Query
+    const { data: seatsData, error, isLoading, refetch } = useQuery({
         queryKey: ['seats', movieProjectionId],
         queryFn: async () => {
-            try {
-                const headers = getAuthHeaders();
-                const response = await fetch(`https://localhost:7101/api/moviesprojection/${movieProjectionId}/seats`, {
-                    headers
-                });
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        navigate('/login', { state: { from: location.pathname } });
-                        throw new Error('Not authenticated');
-                    }
-                    throw new Error('Failed to fetch seats');
-                }
-                return await response.json();
-            } catch (error) {
-                console.error('Error fetching seats:', error);
-                throw error;
-            }
+            const seats = await fetchSeats(movieProjectionId);
+            // Po pobraniu miejsc, sprawdź które należą do bieżącego użytkownika
+            const userBookings = seats.filter(seat => {
+                const bookingId = localStorage.getItem(`booking_${seat.seatId}`);
+                return bookingId !== null; // Jeśli mamy bookingId w localStorage, to miejsce należy do nas
+            });
+
+            // Aktualizuj selectedSeats na podstawie zapisanych rezerwacji
+            const userSeatIds = userBookings.map(seat => seat.seatId);
+            setSelectedSeats(userSeatIds);
+
+            return seats;
         },
         enabled: !!movieProjectionId,
-        retry: false
+        staleTime: 0,
+        refetchInterval: false,
     });
 
-    // Fetch movie projection details
-    const { data: projection, error: projectionError } = useQuery<MovieProjection>({
-        queryKey: ['projection', movieProjectionId],
-        queryFn: async () => {
-            try {
-                const headers = getAuthHeaders();
-                const response = await fetch(`https://localhost:7101/api/moviesprojection/${movieProjectionId}`, {
-                    headers
-                });
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        navigate('/login', { state: { from: location.pathname } });
-                        throw new Error('Not authenticated');
-                    }
-                    throw new Error('Failed to fetch projection');
+    const seats = seatsData ? transformSeatsData(seatsData) : [];
+
+    // Timer management
+    useEffect(() => {
+        let timer: ReturnType<typeof setInterval>;
+
+        if (selectedSeats.length > 0 && !showSummary) {
+            const startTime = Date.now();
+            setTimeRemaining(SELECTION_TIMEOUT);
+            setSelectionExpired(false);
+
+            timer = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const remaining = SELECTION_TIMEOUT - elapsed;
+
+                if (remaining <= 0) {
+                    setSelectedSeats([]);
+                    setTimeRemaining(null);
+                    setSelectionExpired(true);
+                    clearInterval(timer);
+                } else {
+                    setTimeRemaining(remaining);
                 }
-                return await response.json();
-            } catch (error) {
-                console.error('Error fetching projection:', error);
-                throw error;
-            }
-        },
-        enabled: !!movieProjectionId,
-        retry: false
-    });
-
-    // Generate seats layout
-    const seats = useMemo(() => {
-        const seatRows: SeatProps[][] = [];
-
-        for (let row = 0; row < ROWS; row++) {
-            const rowSeats: SeatProps[] = [];
-            for (let seatInRow = 0; seatInRow < SEATS_PER_ROW; seatInRow++) {
-                const seatId = BASE_SEAT_ID + (row * SEATS_PER_ROW + seatInRow + 1);
-                const seatStatus = seatsStatus.find(s => s.seatId === seatId);
-
-                rowSeats.push({
-                    id: seatId,
-                    row: row + 1,
-                    number: seatInRow + 1,
-                    status: seatStatus?.status ?? SeatStatusEnum.Available // Domyślnie miejsce jest dostępne
-                });
-            }
-            seatRows.push(rowSeats);
+            }, 1000);
+        } else if (selectedSeats.length === 0) {
+            setTimeRemaining(null);
         }
-        return seatRows;
-    }, [seatsStatus]);
 
-    const handleSeatClick = (seatId: number) => {
-        setSelectedSeats(prev => {
-            if (prev.includes(seatId)) {
-                return prev.filter(id => id !== seatId);
+        return () => {
+            if (timer) {
+                clearInterval(timer);
             }
-            return [...prev, seatId];
-        });
+        };
+    }, [selectedSeats.length, showSummary]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            // Clean up booking IDs from localStorage
+            Object.keys(bookingIds).forEach(seatId => {
+                localStorage.removeItem(`booking_${seatId}`);
+            });
+        };
+    }, [bookingIds]);
+
+    const handleSeatClick = async (seatId: number) => {
+        if (selectionExpired) {
+            return;
+        }
+
+        try {
+            if (selectedSeats.includes(seatId)) {
+                // Pobierz ID rezerwacji do usunięcia
+                const bookingId = bookingIds[seatId];
+                if (bookingId) {
+                    // Usuń rezerwację przez DELETE
+                    const deleteResponse = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        }
+                    });
+
+                    if (!deleteResponse.ok) {
+                        throw new Error('Failed to delete booking');
+                    }
+                }
+
+                // Aktualizuj stan lokalny
+                setSelectedSeats(prev => prev.filter(id => id !== seatId));
+                localStorage.removeItem(`booking_${seatId}`);
+                setBookingIds(prev => {
+                    const newBookingIds = { ...prev };
+                    delete newBookingIds[seatId];
+                    return newBookingIds;
+                });
+                return;
+            }
+
+            // Create booking via POST
+            const response = await fetch(`${API_BASE_URL}/api/bookings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify({
+                    movieProjectionId: movieProjectionId,
+                    seatId: seatId
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create booking');
+            }
+
+            const bookingId = await response.text();
+            console.log(`Created booking ID: ${bookingId} for seat: ${seatId}`);
+
+            // Store booking ID
+            localStorage.setItem(`booking_${seatId}`, bookingId);
+            setBookingIds(prev => ({
+                ...prev,
+                [seatId]: bookingId
+            }));
+
+            setSelectedSeats(prev => [...prev, seatId]);
+        } catch (error) {
+            console.error('Error creating booking:', error);
+            // Handle error (could add error state and display message)
+        }
+    };
+
+    const formatTime = (ms: number): string => {
+        const minutes = Math.floor(ms / 60000);
+        const seconds = Math.floor((ms % 60000) / 1000);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     };
 
     const formatPrice = (amount: number, currency: string): string => {
         return `${(amount / 100).toFixed(2)} ${currency}`;
     };
 
-    const getSeatClassName = (seat: SeatProps, isSelected: boolean): string => {
-        if (isSelected) return 'seat-selection__seat--selected';
+    const getSeatClassName = (seat: SeatProps): string => {
+        // Najpierw sprawdź czy to miejsce należy do bieżącego użytkownika
+        const isUserBooking = localStorage.getItem(`booking_${seat.id}`) !== null;
+
+        // Jeśli to miejsce należy do bieżącego użytkownika, pokaż jako wybrane (żółte)
+        if (isUserBooking) {
+            return 'seat-selection__seat--selected';
+        }
 
         switch (seat.status) {
             case SeatStatusEnum.Available:
                 return 'seat-selection__seat--available';
             case SeatStatusEnum.Reservation:
-                return 'seat-selection__seat--reserved';
+                return 'seat-selection__seat--unavailable';  // szare - w trakcie rezerwacji przez kogoś innego
             case SeatStatusEnum.Occupied:
+                return 'seat-selection__seat--reserved';     // czerwone - zajęte na stałe
             default:
                 return 'seat-selection__seat--unavailable';
         }
     };
 
-    // Handle authentication errors
-    const authError = (seatsError || projectionError)?.message?.includes('Not authenticated');
-    if (authError) {
-        return (
-            <MainLayout>
-                <div className="seat-selection">
-                    <div className="seat-selection__container">
-                        <div className="seat-selection__error">
-                            <h2>Authentication Required</h2>
-                            <p>Please log in to view and book seats.</p>
-                            <Button
-                                className="seat-selection__button seat-selection__button--login"
-                                onClick={() => navigate('/login', { state: { from: location.pathname } })}
-                            >
-                                Go to Login
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </MainLayout>
-        );
-    }
+    const isSeatSelectable = (seat: SeatProps): boolean => {
+        if (selectionExpired) return false;
+
+        // Miejsce jest wybieralne jeśli:
+        // 1. Jest dostępne
+        // 2. Należy do bieżącego użytkownika (ma booking w localStorage)
+        return seat.status === SeatStatusEnum.Available ||
+            localStorage.getItem(`booking_${seat.id}`) !== null;
+    };
 
     if (showSummary) {
         return (
@@ -226,6 +303,33 @@ export const SeatSelection: React.FC = () => {
         );
     }
 
+    if (isLoading) {
+        return (
+            <MainLayout>
+                <div className="seat-selection">
+                    <div className="seat-selection__container">
+                        <p>Loading seats...</p>
+                    </div>
+                </div>
+            </MainLayout>
+        );
+    }
+
+    if (error) {
+        return (
+            <MainLayout>
+                <div className="seat-selection">
+                    <div className="seat-selection__container">
+                        <p className="seat-selection__error">
+                            {error instanceof Error ? error.message : 'An error occurred while fetching seats'}
+                        </p>
+                        <Button onClick={() => window.location.reload()}>Retry</Button>
+                    </div>
+                </div>
+            </MainLayout>
+        );
+    }
+
     return (
         <MainLayout>
             <div className="seat-selection">
@@ -235,12 +339,17 @@ export const SeatSelection: React.FC = () => {
                             <h1 className="seat-selection__movie-title">
                                 {decodeURIComponent(movieTitle || '')}
                             </h1>
-                            <p className="seat-selection__showtime">
-                                Showtime: {new Date(showtime).toLocaleString()}
+                            <p className="seat-selection__hall-info">
+                                Hall: {mockProjection.cinemaHall.name} | Type: {mockProjection.screenType}
                             </p>
-                            {projection && (
-                                <p className="seat-selection__hall-info">
-                                    Hall: {projection.cinemaHall.name} | Type: {projection.screenType}
+                            {timeRemaining !== null && (
+                                <p className="seat-selection__timer">
+                                    Time remaining: {formatTime(timeRemaining)}
+                                </p>
+                            )}
+                            {selectionExpired && (
+                                <p className="seat-selection__expired-message">
+                                    Selection time expired. Please make a new selection.
                                 </p>
                             )}
                         </div>
@@ -260,9 +369,9 @@ export const SeatSelection: React.FC = () => {
                                     {row.map((seat) => (
                                         <button
                                             key={seat.id}
-                                            onClick={() => seat.status === SeatStatusEnum.Available && handleSeatClick(seat.id)}
-                                            className={`seat-selection__seat ${getSeatClassName(seat, selectedSeats.includes(seat.id))}`}
-                                            disabled={seat.status !== SeatStatusEnum.Available}
+                                            onClick={() => isSeatSelectable(seat) && handleSeatClick(seat.id)}
+                                            className={`seat-selection__seat ${getSeatClassName(seat)}`}
+                                            disabled={!isSeatSelectable(seat)}
                                         >
                                             <span className="seat-selection__seat-number">{seat.number}</span>
                                         </button>
@@ -295,11 +404,9 @@ export const SeatSelection: React.FC = () => {
 
                         <div className="seat-selection__summary">
                             <p className="seat-selection__count">Selected seats: {selectedSeats.length}</p>
-                            {projection && (
-                                <p className="seat-selection__price">
-                                    Total: {formatPrice(selectedSeats.length * projection.price.ammount, projection.price.currency)}
-                                </p>
-                            )}
+                            <p className="seat-selection__price">
+                                Total: {formatPrice(selectedSeats.length * mockProjection.price.ammount, mockProjection.price.currency)}
+                            </p>
                         </div>
                     </div>
 
@@ -313,7 +420,7 @@ export const SeatSelection: React.FC = () => {
                         <Button
                             className="seat-selection__button seat-selection__button--next"
                             onClick={() => setShowSummary(true)}
-                            disabled={selectedSeats.length === 0}
+                            disabled={selectedSeats.length === 0 || selectionExpired}
                         >
                             Continue
                         </Button>

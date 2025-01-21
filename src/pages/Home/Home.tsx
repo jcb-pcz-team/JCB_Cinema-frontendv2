@@ -1,9 +1,32 @@
+/**
+ * @file Home.tsx
+ * @description React component that implements a movie showcase carousel for the home page.
+ * Features automatic slideshow, manual navigation, and movie information display.
+ */
+
 import './Home.scss';
 import React, { useState, useEffect } from "react";
 import { Button } from "../../components/Button/Button";
 import { moviesData } from "../../data/moviesData";
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * @component Home
+ * @description Main landing page component featuring a movie carousel with automatic rotation.
+ * Includes movie details display, navigation dots, and action buttons.
+ *
+ * Features:
+ * - Automatic slideshow with fade transitions
+ * - Manual navigation through dot indicators
+ * - Movie information display (title, duration, genre, description)
+ * - Navigation to movie details page
+ * - Responsive layout with background images
+ *
+ * @example
+ * ```tsx
+ * <Home />
+ * ```
+ */
 export const Home: React.FC = () => {
     const navigate = useNavigate();
     const [movieIndex, setMovieIndex] = useState(0);

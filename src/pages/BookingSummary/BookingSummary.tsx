@@ -1,140 +1,65 @@
-/**
- * @fileoverview Komponent podsumowania rezerwacji biletów.
- */
-
 import React, { useState } from 'react';
+import { Link } from "react-router-dom";
 import './BookingSummary.scss';
-import {Link} from "react-router-dom";
 
-/**
- * Props dla komponentu BookingSummary
- * @interface BookingSummaryProps
- */
 interface BookingSummaryProps {
-    /** Tytuł filmu */
     movieTitle: string;
-    /** Czas seansu */
     showtime: string;
-    /** Lista wybranych miejsc */
     selectedSeats: string[];
-    /** ID projekcji filmu */
-    movieProjectionId: number;
-    /** Callback powrotu do poprzedniego widoku */
     onBack: () => void;
-    /** Opcjonalny callback powrotu do strony głównej */
-    onHome?: () => void;
 }
 
-/**
- * Komponent podsumowania rezerwacji
- * @component
- * @param {BookingSummaryProps} props - Props komponentu
- * @returns {JSX.Element} Komponent podsumowania rezerwacji
- */
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:7101';
 
 export const BookingSummary: React.FC<BookingSummaryProps> = ({
                                                                   movieTitle,
                                                                   showtime,
                                                                   selectedSeats,
-                                                                  movieProjectionId,
-                                                                  onBack,
-                                                                  onHome = () => {}
+                                                                  onBack
                                                               }) => {
     const [isBooking, setIsBooking] = useState(false);
     const [bookingComplete, setBookingComplete] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    /**
-     * Pobiera nagłówki autoryzacji
-     * @returns {Object} Nagłówki z tokenem autoryzacji
-     * @throws {Error} Błąd gdy użytkownik nie jest zalogowany
-     */
-
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('authToken');
-        if (!token) throw new Error('Not authenticated');
-
-        return {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        };
-    };
-
-    /**
-     * Obsługuje proces rezerwacji miejsc
-     * @async
-     */
 
     const handleBooking = async () => {
         setIsBooking(true);
         setError(null);
 
         try {
-            const headers = getAuthHeaders();
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            };
 
-            // Create bookings one by one and wait for each response
-            const bookings = [];
+            // Confirm all bookings that were created in seat selection
             for (const seatId of selectedSeats) {
-                const bookingData = {
-                    movieProjectionId: Number(movieProjectionId),
-                    seatId: Number(seatId)
-                };
-
-                console.log('Creating booking with data:', bookingData);
-
-                const bookingResponse = await fetch('https://localhost:7101/api/bookings', {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify(bookingData)
-                });
-
-                if (!bookingResponse.ok) {
-                    const errorText = await bookingResponse.text();
-                    throw new Error(`Failed to create booking for seat ${seatId}. Server response: ${errorText}`);
+                // Get the booking ID from localStorage
+                const bookingId = localStorage.getItem(`booking_${seatId}`);
+                if (!bookingId) {
+                    throw new Error(`No booking ID found for seat ${seatId}`);
                 }
 
-                // API zwraca bezpośrednio ID jako tekst
-                const bookingId = await bookingResponse.text();
-                console.log(`Created booking with ID: ${bookingId} for seat: ${seatId}`);
-
-                // Sprawdź czy otrzymaliśmy prawidłowe ID (liczba)
-                if (!bookingId || isNaN(Number(bookingId))) {
-                    throw new Error(`Server returned invalid booking ID: ${bookingId}`);
-                }
-
-                bookings.push({
-                    id: Number(bookingId),
-                    seatId: seatId
-                });
-            }
-
-            console.log('All bookings created:', bookings);
-
-            // Confirm each booking one by one
-            for (const booking of bookings) {
-                console.log(`Confirming booking ID: ${booking.id} for seat: ${booking.seatId}`);
-
-                const confirmResponse = await fetch(`https://localhost:7101/api/bookings/confirm/${booking.id}`, {
-                    method: 'POST',
+                // Confirm the booking
+                const confirmResponse = await fetch(`${API_BASE_URL}/api/bookings/confirm/${bookingId}`, {
+                    method: 'PUT',
                     headers
                 });
 
                 if (!confirmResponse.ok) {
-                    const errorText = await confirmResponse.text();
-                    throw new Error(`Failed to confirm booking ${booking.id}. Server response: ${errorText}`);
+                    throw new Error(`Failed to confirm booking for seat ${seatId}`);
                 }
 
-                console.log(`Successfully confirmed booking ID: ${booking.id}`);
+                // Clean up localStorage after successful confirmation
+                localStorage.removeItem(`booking_${seatId}`);
             }
 
+            // All confirmations successful
             console.log('All bookings confirmed successfully');
             setBookingComplete(true);
+
         } catch (err) {
             console.error('Booking error:', err);
             setError(err instanceof Error ? err.message : 'Failed to complete booking');
-            if (err instanceof Error && err.message.includes('Not authenticated')) {
-                setError('Please log in to complete your booking');
-            }
         } finally {
             setIsBooking(false);
         }
@@ -162,7 +87,9 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                             <div className="booking-success__seats">
                                 <p className="booking-success__seats-label">Selected seats:</p>
                                 <p className="booking-success__seats-list">
-                                    {selectedSeats.map(seat => `Row: ${Math.floor((parseInt(seat)-1)/5 + 1)}, Seat: ${(parseInt(seat)-1)%5 + 1}`).join(' | ')}
+                                    {selectedSeats.map(seat =>
+                                        `Row: ${Math.floor((parseInt(seat)-1)/5 + 1)}, Seat: ${(parseInt(seat)-1)%5 + 1}`
+                                    ).join(' | ')}
                                 </p>
                             </div>
                         </div>
@@ -171,11 +98,9 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                             <p>Your booking has been confirmed!</p>
                         </div>
 
-                        <button className="booking-success__button" onClick={onHome}>
-                            <Link to="/">
-                                Return to Home
-                            </Link>
-                        </button>
+                        <Link to="/" className="booking-success__button">
+                            Return to Home
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -190,7 +115,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                         <h2 className="booking-summary__title">Booking Summary</h2>
                         <p className="booking-summary__subtitle">Please verify your booking details</p>
                         {error && (
-                            <p className="booking-summary__error" style={{ color: 'red', marginTop: '10px' }}>
+                            <p className="booking-summary__error">
                                 {error}
                             </p>
                         )}

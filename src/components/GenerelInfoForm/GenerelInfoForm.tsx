@@ -5,13 +5,24 @@ import { Button } from '../Button/Button';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
+/**
+ * Interface representing the form values for general user information.
+ * @interface
+ */
 interface GeneralInfoValues {
+    /** User's login/username */
     login: string;
+    /** User's first name */
     firstName: string;
+    /** User's last name */
     lastName: string;
+    /** User's phone number including country code (e.g., +48123456789) */
     phoneNumber: string;
+    /** Street name of user's address */
     street: string;
+    /** House number of user's address */
     houseNumber: string;
+    /** Country dial code extracted from phone number (e.g., "48" from "+48123456789") */
     dialCode?: string;
 }
 
@@ -29,12 +40,49 @@ const FORM_FIELDS: (keyof GeneralInfoValues)[] = [
     'houseNumber'
 ];
 
+/**
+ * A form component for managing user's general information.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * const formik = useFormik({
+ *   initialValues: {
+ *     login: 'john.doe',
+ *     firstName: 'John',
+ *     lastName: 'Doe',
+ *     phoneNumber: '+48123456789',
+ *     street: 'Main Street',
+ *     houseNumber: '42'
+ *   },
+ *   onSubmit: values => console.log(values)
+ * });
+ *
+ * return (
+ *   <GeneralInfoForm
+ *     formik={formik}
+ *     onUpdateSuccess={() => console.log('Profile updated!')}
+ *   />
+ * );
+ * ```
+ */
 export const GeneralInfoForm: React.FC<Props> = ({ formik, onUpdateSuccess }) => {
     const queryClient = useQueryClient();
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    const mutation = useMutation({
-        mutationFn: async (values: GeneralInfoValues) => {
+    /**
+     * Mutation hook for handling form submission
+     * Handles the API call to update user information
+     */
+    const mutation =
+        useMutation({
+            /**
+             * Mutation function that sends the form data to the API
+             * @param values - Form values to be submitted
+             * @throws {Error} When the API request fails
+             * @returns The response data from the API
+             */
+            mutationFn: async (values: GeneralInfoValues) => {
             let dialCode = '';
             let phoneNumber = values.phoneNumber;
 
@@ -105,7 +153,11 @@ export const GeneralInfoForm: React.FC<Props> = ({ formik, onUpdateSuccess }) =>
             mutation.mutate(formik.values);
         }
     };
-
+    /**
+     * Formats field names for display as labels
+     * @param field - Name of the form field
+     * @returns Formatted label string
+     */
     const formatFieldLabel = (field: keyof GeneralInfoValues): string => {
         if (field === 'phoneNumber') {
             return 'Phone Number (e.g. +48123456789)';
@@ -113,13 +165,20 @@ export const GeneralInfoForm: React.FC<Props> = ({ formik, onUpdateSuccess }) =>
         return field.charAt(0).toUpperCase() +
             field.slice(1).replace(/([A-Z])/g, ' $1');
     };
-
+    /**
+     * Handles changes to form fields
+     * @param e - Change event from input field
+     */
     const handleFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         formik.setFieldValue(name, value);
         formik.setFieldTouched(name, true, false);
     };
-
+    /**
+     * Handles changes to phone number field
+     * Formats the phone number and removes invalid characters
+     * @param e - Change event from phone number input
+     */
     const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let value = e.target.value;
         value = value.replace(/[^\d+]/g, '');
