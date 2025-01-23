@@ -1,0 +1,91 @@
+@use '../../../../JCB_Cinema-frontendV2-last/src/assets/styles/index' as i;
+
+.tickets {
+  width: 1200px;
+  min-height: 100vh;
+  background-color: #000;
+  color: #fff;
+  padding: 1rem;
+
+  &__container {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  &__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  &__loading {
+    text-align: center;
+    padding: 3rem 0;
+    color: #9ca3af;
+  }
+
+  &__empty {
+    text-align: center;
+    padding: 3rem 0;
+    color: #9ca3af;
+  }
+
+  &__pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    &-btn {
+      background: none;
+      border: 1px solid i.$clr-yellow;
+      color: i.$clr-yellow;
+      cursor: pointer;
+      font-size: 0.875rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.25rem;
+      transition: all 0.3s ease;
+
+      &:hover:not(:disabled) {
+        background-color: i.$clr-yellow;
+        color: #000;
+      }
+
+      &:disabled {
+        border-color: #374151;
+        color: #374151;
+        cursor: not-allowed;
+      }
+    }
+
+    &-info {
+      font-size: 0.875rem;
+      color: #9ca3af;
+    }
+  }
+}
+
+.profile__header {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  color: #fff;
+
+  &.header--secondary {
+    span {
+      color: i.$clr-yellow;
+    }
+  }
+}

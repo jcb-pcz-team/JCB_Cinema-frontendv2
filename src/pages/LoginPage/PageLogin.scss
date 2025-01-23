@@ -1,0 +1,39 @@
+@use "../../assets/styles/index" as i;
+
+.login-page {
+  width: 100%;
+  min-height: 100vh;  // changed to min-height for better responsiveness
+  @include i.flex-center;
+  background-image: url("src/assets/images/backgorund-popcorn.png");
+  background-size: cover;  // ensure background covers entire area
+  background-position: center;  // center the background
+  padding: 1rem;  // add padding for small screens
+
+  &__container {
+    @include i.flex-center;
+    flex-direction: column;
+    border-radius: 16px;  // slightly increased radius
+    background: rgba(0, 0, 0, 0.50);
+    backdrop-filter: blur(8px);  // increased blur for better readability
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);  // added subtle shadow
+    width: 100%;  // full width on mobile
+    max-width: 24rem;  // default max-width for small screens
+    padding: 1.5rem;  // increased padding
+
+    @include i.respond-to(desktop) {
+      max-width: 35rem;
+      padding: 2.5rem 4rem;
+    }
+
+    @include i.respond-to(large-desktop) {
+      max-width: 35rem;
+      padding: 3rem 4.5rem;
+    }
+  }
+
+  &__header {
+    margin-bottom: 2rem;  // increased margin
+    text-align: center;
+    width: 100%;
+  }
+}
