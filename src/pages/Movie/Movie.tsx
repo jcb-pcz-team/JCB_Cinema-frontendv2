@@ -1,9 +1,3 @@
-/**
- * @file Movie.tsx
- * @description React component that displays detailed information about a movie and its screening schedule.
- * The component includes movie details, poster, and an interactive schedule for booking tickets.
- */
-
 import "./Movie.scss";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
@@ -11,82 +5,36 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from "../../components/Button/Button";
 import { MainLayout } from "../../layouts/MainLayout/MainLayout";
 
-/**
- * @interface Genre
- * @description Represents a movie genre with its identifier and name
- */
 interface Genre {
-    /** Unique identifier for the genre */
     genreId: number;
-    /** Name of the genre */
     genreName: string;
 }
 
-/**
- * @interface Movie
- * @description Represents detailed information about a movie
- */
 interface Movie {
-    /** Title of the movie */
     title: string;
-    /** Detailed description or synopsis of the movie */
     description: string;
-    /** Duration of the movie in minutes */
     duration: number;
-    /** Release date of the movie */
     releaseDate: string;
-    /** Genre information of the movie */
     genre: Genre;
-    /** URL-friendly version of the movie title */
     normalizedTitle: string;
-    /** Release status or information */
     release: string;
 }
 
-/**
- * @interface Screening
- * @description Represents a single movie screening event with all related information
- */
-interface Screening {
-    /** Unique identifier for the movie projection */
+interface MovieProjection {
     movieProjectionId: number;
-    /** Movie details for this screening */
     movie: Movie;
-    /** Date and time of the screening */
     screeningTime: string;
-    /** Type of screen/projection (e.g., "2D", "3D", "IMAX") */
     screenType: string;
-    /** Information about the cinema hall */
     cinemaHall: {
-        /** Name or identifier of the cinema hall */
         name: string;
     };
-    /** Price information for the screening */
     price: {
-        /** Price amount */
         ammount: number;
-        /** Currency code */
         currency: string;
     };
-    /** Number of seats still available for booking */
     availableSeats: number;
 }
 
-/**
- * @interface ScheduleDay
- * @description Represents a day in the screening schedule
- */
-interface ScheduleDay {
-    /** Date of the schedule */
-    date: string;
-    /** Array of screenings scheduled for this day */
-    screenings: Screening[];
-}
-
-/**
- * @typedef {string} DayCode
- * @description Three-letter code representing days of the week
- */
 type DayCode = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
 interface Day {
     short: DayCode;
@@ -94,18 +42,6 @@ interface Day {
     date: string;
 }
 
-/**
- * @function Movie
- * @description Main component for displaying movie details and screening schedule
- * @component
- *
- * @returns {JSX.Element} Rendered movie details page with schedule
- *
- * @example
- * ```tsx
- * <Movie />
- * ```
- */
 export const Movie: React.FC = () => {
     const { title } = useParams<{ title: string }>();
     const [selectedDay, setSelectedDay] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -117,6 +53,26 @@ export const Movie: React.FC = () => {
     const scrollToShowtimes = () => {
         showtimesRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
+
+    // Get next 7 days for the calendar
+    const days = useMemo((): Day[] => {
+        const days: Day[] = [];
+        const today = new Date();
+
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + i);
+            const dayCode = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()] as DayCode;
+            const fullDay = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
+
+            days.push({
+                short: dayCode,
+                full: fullDay,
+                date: date.toISOString().split('T')[0]
+            });
+        }
+        return days;
+    }, []);
 
     // Fetch movie details
     useEffect(() => {
@@ -141,66 +97,35 @@ export const Movie: React.FC = () => {
         }
     }, [title]);
 
-    // Get next 7 days for the calendar
-    const days = useMemo((): Day[] => {
-        const days: Day[] = [];
-        const today = new Date();
-
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() + i);
-            const dayCode = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()] as DayCode;
-            const fullDay = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
-
-            days.push({
-                short: dayCode,
-                full: fullDay,
-                date: date.toISOString().split('T')[0]
-            });
-        }
-        return days;
-    }, []);
-
-    // Fetch schedules
-    const { data: schedules = [], isLoadingSchedules } = useQuery<ScheduleDay[]>({
-        queryKey: ['schedules', selectedDay],
+    const [selectedType, setSelectedType] = useState<ScreeningFormat>('All');
+    const [selectedGenre, setSelectedGenre] = useState<Genre>('All');
+    // Fetch and filter screenings for this movie
+    const { data: screenings = [], isLoadingSchedules } = useQuery<MovieProjection[]>({
+        queryKey: ['movieProjections', selectedDay, movie?.normalizedTitle],
         queryFn: async () => {
-            const startDate = new Date(selectedDay);
-            const endDate = new Date(selectedDay);
-            endDate.setDate(endDate.getDate() + 6);
-
-            const dateFrom = startDate.toISOString().split('T')[0];
-            const dateTo = endDate.toISOString().split('T')[0];
-
-            const response = await fetch(
-                `https://localhost:7101/api/schedules?DateFrom=${dateFrom}&DateTo=${dateTo}`
-            );
-
+            const response = await fetch('https://localhost:7101/api/moviesprojection');
             if (!response.ok) {
-                throw new Error('Failed to fetch schedules');
+                throw new Error('Failed to fetch movie projections');
             }
-            return response.json();
+            const allProjections = await response.json();
+
+            return allProjections.filter((projection: MovieProjection) => {
+                const projectionDate = new Date(projection.screeningTime).toISOString().split('T')[0];
+                return projectionDate === selectedDay &&
+                    projection.movie.normalizedTitle === movie?.normalizedTitle;
+            });
         },
+        enabled: !!movie?.normalizedTitle,
         staleTime: 5 * 60 * 1000
     });
 
-    // Filter screenings for this movie
-    const filteredScreenings = useMemo(() => {
-        const daySchedule = schedules.find(schedule => schedule.date === selectedDay);
-        if (!daySchedule) return [];
+    // Sort screenings by time
+    const sortedScreenings = useMemo(() => {
+        return [...screenings].sort((a, b) =>
+            new Date(a.screeningTime).getTime() - new Date(b.screeningTime).getTime()
+        );
+    }, [screenings]);
 
-        return daySchedule.screenings
-            .filter(screening => screening.movie.normalizedTitle === title)
-            .sort((a, b) => new Date(a.screeningTime).getTime() - new Date(b.screeningTime).getTime());
-    }, [schedules, selectedDay, title]);
-
-    /**
-     * @function fetchImage
-     * @description Attempts to fetch movie poster image using different path formats
-     * @param {string} movieTitle - Original movie title
-     * @param {string} normalizedTitle - URL-friendly version of the title
-     * @returns {Promise<string>} URL of the fetched image
-     */
     const fetchImage = async (movieTitle: string, normalizedTitle: string): Promise<string> => {
         const token = localStorage.getItem('authToken');
         const headers = {
@@ -326,13 +251,13 @@ export const Movie: React.FC = () => {
                     <div className="movie__schedule-times">
                         {isLoadingSchedules ? (
                             <div className="schedule__empty-message">Loading showtimes...</div>
-                        ) : filteredScreenings.length === 0 ? (
+                        ) : sortedScreenings.length === 0 ? (
                             <div className="schedule__empty-message">
                                 No showtimes available for this day
                             </div>
                         ) : (
                             <div className="movie__schedule-grid">
-                                {filteredScreenings.map((screening) => (
+                                {sortedScreenings.map((screening) => (
                                     <div key={screening.movieProjectionId} className="movie__schedule-item">
                                         <div className="movie__schedule-info">
                                             {screening.screenType} | {screening.cinemaHall.name} |{' '}

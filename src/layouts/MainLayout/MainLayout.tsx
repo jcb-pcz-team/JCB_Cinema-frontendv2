@@ -9,6 +9,7 @@ import React from 'react';
 import { Header } from '../../components/Header/Header';
 // import { Footer } from '../../components/Footer/Footer';
 import { MainLayoutProps } from "../../types/layouts.types.ts";
+import {Footer} from "../../components/Footer/Footer.tsx";
 
 /**
  * @component MainLayout
@@ -30,7 +31,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <div className="main-layout">
             <Header />
             <main>{children}</main>
-            {/*<Footer />*/}
+            <Footer />
         </div>
     );
 };

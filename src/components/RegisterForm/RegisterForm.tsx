@@ -1,159 +1,154 @@
 import "./RegisterForm.scss";
-import {Input} from "../Input/Input.tsx";
-import {useFormik} from "formik";
+import { Input } from "../Input/Input";
+import { useFormik } from "formik";
 import * as Yup from "yup";
-import {Button} from "../Button/Button.tsx";
+import axios, { AxiosError } from "axios";
+import { Button } from "../Button/Button";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AlertCircle } from 'lucide-react';
 
-/**
- * Registration Form Component
- *
- * Provides a comprehensive user registration form with:
- * - Personal information inputs
- * - Contact details
- * - Address information
- * - Password creation
- *
- * Uses Formik for form management and Yup for validation
- *
- * @returns A React component for user registration
- */
+interface ServerErrorResponse {
+    message?: string;
+}
+
+const decodeToken = (token: string) => {
+    try {
+        const payload = token.split('.')[1];
+        const decodedPayload = JSON.parse(atob(payload));
+        return {
+            role: decodedPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || decodedPayload.role,
+            userName: decodedPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/name"] || decodedPayload.name
+        };
+    } catch (error) {
+        console.error('Error decoding token:', error);
+        return null;
+    }
+};
+
 export const FormRegister = () => {
-    /**
-     * Formik configuration for registration form
-     * Includes:
-     * - Initial form values
-     * - Validation schema
-     * - Form submission handler
-     */
-    const formik = useFormik<{
-        firstName: string;
-        lastName: string;
-        email: string;
-        phoneNumber: string;
-        city: string;
-        street: string;
-        houseNumber: string;
-        password: string;
-        confirmPassword: string;
-        }>({
-        // Initial form values with empty strings
+    const [registrationError, setRegistrationError] = useState<string | null>(null);
+    const navigate = useNavigate();
+
+    const axiosInstance = axios.create({
+        baseURL: 'https://localhost:7101/api',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+
+    const formik = useFormik({
         initialValues: {
-            firstName: "",
-            lastName: "",
+            userName: "",
             email: "",
-            phoneNumber: "",
-            city: "",
-            street: "",
-            houseNumber: "",
             password: "",
             confirmPassword: "",
         },
-        // Validation rules using Yup
         validationSchema: Yup.object({
-            firstName: Yup.string()
-                .required("First Name is required"),
-            lastName: Yup.string()
-                .required("Last Name is required"),
+            userName: Yup.string()
+                .required("Username is required")
+                .min(3, "Username must be at least 3 characters"),
             email: Yup.string()
-                .email("Invalid is required")
+                .email("Invalid email format")
                 .required("Email is required"),
-            phoneNumber: Yup.number()
-                .max(9),
-            city: Yup.string(),
-            street: Yup.string(),
-            houseNumber: Yup.number()
-                .max(5),
             password: Yup.string()
                 .required("Password is required")
                 .min(8, "Password must be at least 8 characters")
-                .matches(/[a-zA-Z]/, "Password must contain letters")
+                .matches(/[a-zA-Z]/, "Password must contain letters"),
+            confirmPassword: Yup.string()
+                .oneOf([Yup.ref('password')], 'Passwords must match')
+                .required('Confirm Password is required')
         }),
-            onSubmit: (values) => {
-                console.log(values);
-            },
+        onSubmit: async (values, { setSubmitting }) => {
+            try {
+                setRegistrationError(null);
+                await axiosInstance.post('/auth/register', {
+                    userName: values.userName,
+                    password: values.password,
+                    email: values.email,
+                    role: "User"
+                });
+
+                // Login after successful registration
+                const loginResponse = await axiosInstance.post<string>('/auth/login', {
+                    userName: values.userName,
+                    password: values.password,
+                });
+
+                const token = loginResponse.data;
+                const decodedToken = decodeToken(token);
+
+                if (decodedToken) {
+                    localStorage.setItem('authToken', token);
+                    localStorage.setItem('userRole', decodedToken.role);
+                    localStorage.setItem('userName', values.userName);
+                    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                    navigate('/');
+                } else {
+                    setRegistrationError('Invalid token received');
+                }
+            } catch (error) {
+                if (error instanceof AxiosError) {
+                    if (error.response) {
+                        const serverError = error.response.data as ServerErrorResponse;
+                        setRegistrationError(serverError.message || 'Registration failed');
+                    } else if (error.request) {
+                        setRegistrationError('No response from server');
+                    } else {
+                        setRegistrationError('Registration failed');
+                    }
+                } else {
+                    setRegistrationError('Unexpected error occurred');
+                }
+            } finally {
+                setSubmitting(false);
+            }
+        },
     });
 
     return (
-        <form className="form-register" action="">
-            <div className="data-row">
-                <Input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    placeholder="First Name"
-                    onChange={formik.handleChange}
-                    value={formik.values.firstName}
-                ></Input>
-                <Input
-                    id="lastName"
-                    name="lastName"
-                    type="text"
-                    placeholder="Last Name"
-                    onChange={formik.handleChange}
-                    value={formik.values.lastName}
-                ></Input>
-            </div>
-            <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Email"
-                onChange={formik.handleChange}
-                value={formik.values.email}
-            ></Input>
-            <Input
-                id="phoneNumber"
-                name="phoneNumber"
-                type="phoneNumber"
-                placeholder="Phone Number"
-                onChange={formik.handleChange}
-                value={formik.values.phoneNumber}
-            ></Input>
-            <div className="data-row">
-                <Input
-                    id="city"
-                    name="city"
-                    type="text"
-                    placeholder="City"
-                    onChange={formik.handleChange}
-                    value={formik.values.city}
-                ></Input>
-                <Input
-                    id="street"
-                    name="street"
-                    type="text"
-                    placeholder="Street"
-                    onChange={formik.handleChange}
-                    value={formik.values.street}
-                ></Input>
-                <Input
-                    id="houseNumber"
-                    name="houseNumber"
-                    type="text"
-                    placeholder="House Number"
-                    onChange={formik.handleChange}
-                    value={formik.values.houseNumber}
-                ></Input>
-            </div>
-            <div className="data-row">
-                <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="Password"
-                    onChange={formik.handleChange}
-                    value={formik.values.password}
-                ></Input>
-                <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    placeholder="Confirm Password"
-                    onChange={formik.handleChange}
-                    value={formik.values.confirmPassword}
-                ></Input>
-            </div>
-            <Button className="button">Sign up</Button>
+        <form className="form-register" onSubmit={formik.handleSubmit}>
+            {Object.keys(formik.initialValues).map((fieldName) => (
+                <div key={fieldName} className="form-field">
+                    <div className="input-container">
+                        <Input
+                            id={fieldName}
+                            name={fieldName}
+                            type={fieldName.toLowerCase().includes('password') ? 'password' : 'text'}
+                            placeholder={fieldName.charAt(0).toUpperCase() + fieldName.slice(1).replace(/([A-Z])/g, ' $1')}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            value={formik.values[fieldName]}
+                            className={`input ${
+                                formik.touched[fieldName] && formik.errors[fieldName] ? 'input--error' : ''
+                            } ${
+                                formik.touched[fieldName] && !formik.errors[fieldName] ? 'input--success' : ''
+                            }`}
+                        />
+                        {formik.touched[fieldName] && formik.errors[fieldName] && (
+                            <div className="error-message" role="alert">
+                                <AlertCircle className="inline-block mr-2" size={16} />
+                                {formik.errors[fieldName]}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ))}
+
+            <Button
+                type="submit"
+                className="button"
+                disabled={formik.isSubmitting}
+            >
+                {formik.isSubmitting ? 'Signing up...' : 'Sign up'}
+            </Button>
+
+            {registrationError && (
+                <div className="error-container" role="alert">
+                    <AlertCircle className="inline-block mr-2" size={20} />
+                    <span className="error-message">{registrationError}</span>
+                </div>
+            )}
         </form>
     );
 };

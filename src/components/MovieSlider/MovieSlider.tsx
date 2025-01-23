@@ -107,7 +107,7 @@ export const MovieSlider = () => {
     }
 
     return (
-        <div className="carousel">
+        <div className="carousel" id="upcoming">
             <h1 className="carousel__title">
                 <span className="schedule__title-highlight">U</span>
                 pcoming Movies

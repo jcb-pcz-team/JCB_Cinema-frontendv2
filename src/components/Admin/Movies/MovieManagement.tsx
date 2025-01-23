@@ -1,40 +1,21 @@
-/**
- * Movie management module providing CRUD operations for movies.
- * @module MovieManagement
- */
 import React, { useState, useMemo } from 'react';
 import { TableLayout } from '../TableLayout/TableLayout';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { sortItems, type SortConfig } from '../../../utils/sorting';
 
-/**
- * Movie data structure
- * @interface
- * @property {number} id - Unique identifier of the movie
- * @property {string} title - Movie title
- * @property {string} description - Movie description
- * @property {number} duration - Movie duration in minutes
- * @property {string} releaseDate - Release date of the movie
- * @property {string} genre - Movie genre
- * @property {string} [posterUrl] - Optional URL to movie poster
- */
 interface Movie {
     id: number;
     title: string;
     description: string;
     duration: number;
     releaseDate: string;
-    genre: string;
+    genre: {
+        genreId: number;
+        genreName: string;
+    };
     posterUrl?: string;
 }
 
-/**
- * Form data structure for movie creation/editing
- * @interface
- * @extends {Omit<Movie, 'id' | 'posterUrl'>}
- * @property {string} posterDescription - Description of the movie poster
- * @property {File} [posterFile] - Optional poster image file
- */
 interface MovieFormData {
     title: string;
     description: string;
@@ -45,10 +26,6 @@ interface MovieFormData {
     posterFile?: File;
 }
 
-/**
- * Initial state for the movie form
- * @constant
- */
 const INITIAL_FORM_STATE: MovieFormData = {
     title: '',
     description: '',
@@ -58,18 +35,7 @@ const INITIAL_FORM_STATE: MovieFormData = {
     posterDescription: '',
 };
 
-/**
- * API functions for movie management
- */
-// API functions
 const api = {
-    // Fetch all movies
-    /**
-     * Fetches all movies from the server
-     * @async
-     * @returns {Promise<Movie[]>} Array of movies
-     * @throws {Error} When authentication fails or API request fails
-     */
     fetchMovies: async (): Promise<Movie[]> => {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error('Not authenticated');
@@ -82,30 +48,13 @@ const api = {
             throw new Error('Failed to fetch movies');
         }
 
-        const data = await response.json();
-        return data.map((movie: any) => ({
-            id: movie.movieId,
-            title: movie.title,
-            description: movie.description,
-            duration: movie.duration,
-            releaseDate: movie.releaseDate,
-            genre: movie.genre.genreName,
-            posterUrl: movie.posterUrl
-        }));
+        return await response.json();
     },
 
-    // Add new movie with poster
-    /**
-     * Adds a new movie with optional poster
-     * @async
-     * @param {MovieFormData} formData - Movie data with optional poster
-     * @throws {Error} When upload fails or movie creation fails
-     */
     addMovie: async (formData: MovieFormData): Promise<void> => {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error('Not authenticated');
 
-        // First upload the photo
         if (formData.posterFile) {
             const posterFormData = new FormData();
             posterFormData.append('File', formData.posterFile);
@@ -114,9 +63,7 @@ const api = {
 
             const posterResponse = await fetch('https://localhost:7101/api/photos/upload', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Authorization': `Bearer ${token}` },
                 body: posterFormData
             });
 
@@ -125,7 +72,6 @@ const api = {
             }
         }
 
-        // Then create the movie
         const movieResponse = await fetch('https://localhost:7101/api/movies', {
             method: 'POST',
             headers: {
@@ -137,7 +83,7 @@ const api = {
                 description: formData.description,
                 duration: formData.duration,
                 releaseDate: formData.releaseDate,
-                genre: formData.genre
+                genre: { genreName: formData.genre }
             })
         });
 
@@ -145,34 +91,8 @@ const api = {
             const errorData = await movieResponse.json();
             throw new Error(errorData.message || 'Failed to add movie');
         }
-
-        // If movie was created successfully and we have a poster file, upload it
-        if (formData.posterFile) {
-            const posterFormData = new FormData();
-            posterFormData.append('File', formData.posterFile);
-            posterFormData.append('Description', formData.posterDescription);
-
-            const posterResponse = await fetch(`https://localhost:7101/api/photos/upload`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: posterFormData
-            });
-
-            if (!posterResponse.ok) {
-                throw new Error('Failed to upload poster image');
-            }
-        }
     },
 
-    // Delete movie
-    /**
-     * Deletes a movie by ID
-     * @async
-     * @param {number} id - Movie ID to delete
-     * @throws {Error} When deletion fails
-     */
     deleteMovie: async (id: number): Promise<void> => {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error('Not authenticated');
@@ -188,11 +108,6 @@ const api = {
     }
 };
 
-/**
- * Movie management component
- * Provides interface for creating, viewing, and deleting movies
- * @component
- */
 export const MovieManagement: React.FC = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [formData, setFormData] = useState<MovieFormData>(INITIAL_FORM_STATE);
@@ -201,13 +116,11 @@ export const MovieManagement: React.FC = () => {
 
     const queryClient = useQueryClient();
 
-    // Fetch movies query
     const { data: movies = [], isLoading, error } = useQuery({
         queryKey: ['movies'],
         queryFn: api.fetchMovies
     });
 
-    // Add movie mutation
     const addMovieMutation = useMutation({
         mutationFn: api.addMovie,
         onSuccess: () => {
@@ -221,7 +134,6 @@ export const MovieManagement: React.FC = () => {
         }
     });
 
-    // Delete movie mutation
     const deleteMovieMutation = useMutation({
         mutationFn: api.deleteMovie,
         onSuccess: () => {
@@ -230,24 +142,21 @@ export const MovieManagement: React.FC = () => {
         }
     });
 
-    // Filter movies based on search term
     const filteredMovies = useMemo(() => {
         if (!searchTerm) return movies;
         const searchLower = searchTerm.toLowerCase();
         return movies.filter(movie =>
             movie.title.toLowerCase().includes(searchLower) ||
             movie.description.toLowerCase().includes(searchLower) ||
-            movie.genre.toLowerCase().includes(searchLower)
+            movie.genre.genreName.toLowerCase().includes(searchLower)
         );
     }, [movies, searchTerm]);
 
-    // Sort movies based on sort config
     const sortedMovies = useMemo(() =>
             sortItems(filteredMovies, sortConfig),
         [filteredMovies, sortConfig]
     );
 
-    // Event handlers
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         addMovieMutation.mutate(formData);
@@ -379,6 +288,8 @@ export const MovieManagement: React.FC = () => {
                                     <option value="Science Fiction">Science Fiction</option>
                                     <option value="Fantasy">Fantasy</option>
                                     <option value="Animation">Animation</option>
+                                    <option value="War">War</option>
+                                    <option value="Spy">Spy</option>
                                 </select>
                             </div>
 
@@ -401,7 +312,6 @@ export const MovieManagement: React.FC = () => {
                                     type="file"
                                     accept="image/*"
                                     onChange={handleFileChange}
-                                    required
                                 />
                             </div>
                         </div>
@@ -443,7 +353,7 @@ export const MovieManagement: React.FC = () => {
                         <th onClick={() => handleSort('genre')}>
                             Genre {sortConfig?.key === 'genre' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th>Actions</th>
+                        {/*<th>Actions</th>*/}
                     </tr>
                     </thead>
                     <tbody>
@@ -453,18 +363,18 @@ export const MovieManagement: React.FC = () => {
                             <td>{movie.description}</td>
                             <td>{movie.duration} min</td>
                             <td>{movie.releaseDate}</td>
-                            <td>{movie.genre}</td>
-                            <td>
-                                <div className="admin-table__actions">
-                                    <button
-                                        className="button button--delete"
-                                        onClick={() => handleDelete(movie.id)}
-                                        disabled={deleteMovieMutation.isPending}
-                                    >
-                                        {deleteMovieMutation.isPending ? 'Deleting...' : 'Delete'}
-                                    </button>
-                                </div>
-                            </td>
+                            <td>{movie.genre.genreName}</td>
+                            {/*<td>*/}
+                            {/*    <div className="admin-table__actions">*/}
+                            {/*        <button*/}
+                            {/*            className="button button--delete"*/}
+                            {/*            onClick={() => handleDelete(movie.id)}*/}
+                            {/*            disabled={deleteMovieMutation.isPending}*/}
+                            {/*        >*/}
+                            {/*            {deleteMovieMutation.isPending ? 'Deleting...' : 'Delete'}*/}
+                            {/*        </button>*/}
+                            {/*    </div>*/}
+                            {/*</td>*/}
                         </tr>
                     ))}
                     {sortedMovies.length === 0 && (

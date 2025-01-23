@@ -3,112 +3,54 @@ import { Link } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
 import "./Showtime.scss";
 
-/**
- * Type representing days of the week in three-letter format
- * @typedef {('Mon'|'Tue'|'Wed'|'Thu'|'Fri'|'Sat'|'Sun')} DayCode
- */
 type DayCode = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
-/**
- * Available movie screening formats
- * @typedef {('All'|'2D'|'3D'|'IMAX'|'4DX')} ScreeningFormat
- */
 type ScreeningFormat = 'All' | '2D' | '3D' | 'IMAX' | '4DX';
-
-/**
- * Available movie screening formats
- * @typedef {('All'|'2D'|'3D'|'IMAX'|'4DX')} ScreeningFormat
- */
 type Genre = 'All' | 'Action' | 'Drama' | 'Science Fiction' | 'War';
 
-/**
- * Interface representing a day in the schedule
- * @interface
- */
 interface Day {
-    /** Three-letter day code (e.g., 'Mon') */
     short: DayCode;
-    /** Full day name (e.g., 'Monday') */
     full: string;
-    /** Date in ISO format (YYYY-MM-DD) */
     date: string;
 }
 
-/**
- * Interface representing a movie's details
- * @interface
- */
 interface Movie {
-    /** Movie title */
     title: string;
-    /** Movie description/synopsis */
     description: string;
-    /** Movie duration in minutes */
     duration: number;
-    /** Release date */
     releaseDate: string;
-    /** Movie genre information */
     genre: {
-        /** Unique identifier for the genre */
         genreId: number;
-        /** Name of the genre */
         genreName: string;
     };
-    /** URL-friendly version of the movie title */
     normalizedTitle: string;
-    /** Release information */
     release: string;
 }
 
-/**
- * Interface representing a movie projection/screening
- * @interface
- */
 interface MovieProjection {
-    /** Unique identifier for the projection */
     movieProjectionId: number;
-    /** Movie details */
     movie: Movie;
-    /** Screening time in ISO format */
     screeningTime: string;
-    /** Type of screening (2D, 3D, etc.) */
     screenType: string;
-    /** Cinema hall information */
     cinemaHall: {
-        /** Unique identifier for the cinema hall */
         cinemaHallId: number;
-        /** Name of the cinema hall */
         name: string;
     };
-    /** URL-friendly version of the movie title */
     normalizedMovieTitle: string;
-    /** Ticket price information */
     price: {
-        /** Price amount in smallest currency unit (e.g., cents) */
         ammount: number;
-        /** Currency code */
         currency: string;
     };
-    /** Number of occupied seats */
     occupiedSeats: number;
-    /** Number of available seats */
     availableSeats: number;
 }
 
-/**
- * Showtime component displays movie screenings with filtering options.
- * Allows users to filter movies by day, screening format, and genre.
- * Displays movie cards with screening times and booking links.
- *
- * @component
- * @example
- * ```tsx
- * <Showtime />
- * ```
- */
 export const Showtime: React.FC = () => {
     const [selectedDay, setSelectedDay] = useState<string>(new Date().toISOString().split('T')[0]);
     const [selectedType, setSelectedType] = useState<ScreeningFormat>('All');
     const [selectedGenre, setSelectedGenre] = useState<Genre>('All');
+
+    const screeningTypes: ScreeningFormat[] = ['All', '2D', '3D', 'IMAX', '4DX'];
+    const genres: Genre[] = ['All', 'Action', 'Drama', 'Science Fiction', 'War'];
 
     // Get next 7 days for the calendar
     const days = useMemo((): Day[] => {
@@ -132,7 +74,7 @@ export const Showtime: React.FC = () => {
 
     // Fetch movie projections using React Query
     const { data: movieProjections = [], isLoading, error } = useQuery<MovieProjection[]>({
-        queryKey: ['movieProjections'],
+        queryKey: ['movieProjections', selectedDay, selectedType, selectedGenre],
         queryFn: async () => {
             const response = await fetch('https://localhost:7101/api/moviesprojection');
             if (!response.ok) {
@@ -143,9 +85,6 @@ export const Showtime: React.FC = () => {
         staleTime: 5 * 60 * 1000,
         retry: 2
     });
-
-    const screeningTypes: ScreeningFormat[] = ['All', '2D', '3D', 'IMAX', '4DX'];
-    const genres: Genre[] = ['All', 'Action', 'Drama', 'Science Fiction', 'War'];
 
     // Filter projections based on selected criteria
     const filteredProjections = useMemo(() => {
@@ -211,7 +150,7 @@ export const Showtime: React.FC = () => {
     }
 
     return (
-        <section className="schedule">
+        <section className="schedule" id="showtimes">
             <div className="schedule__container">
                 <header className="schedule__header">
                     <h2 className="schedule__title">

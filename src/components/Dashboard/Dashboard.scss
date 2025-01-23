@@ -2,11 +2,12 @@
 
 .dashboard {
   width: 100%;
-  min-height: 100vh;
+  flex: 1;
   padding: 2rem;
   margin-top: 10vh;
   display: flex;
   flex-direction: column;
+
 
   &__header {
     color: i.$clr-white;
@@ -83,4 +84,8 @@
       gap: 1rem;
     }
   }
+}
+
+.footer {
+  display: none;
 }

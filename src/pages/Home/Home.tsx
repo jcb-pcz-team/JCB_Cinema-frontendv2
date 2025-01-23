@@ -102,7 +102,7 @@ export const Home: React.FC = () => {
                 </p>
                 <div className="buttons-container">
                     <Button className="button" onClick={handleSeeMore}>SEE MORE</Button>
-                    <Button className="button--white">BUY TICKET</Button>
+                    {/*<Button className="button--white">BUY TICKET</Button>*/}
                 </div>
             </div>
             <div className="dots-container">

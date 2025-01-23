@@ -314,7 +314,7 @@ export const ScheduleManagement = () => {
         >
             {isFormVisible && (
                 <div className="form-container">
-                    <h3>{editingId ? 'Edit Schedule' : 'Add New Schedule'}</h3>
+                    {/*<h3>{editingId ? 'Edit Schedule' : 'Add New Schedule'}</h3>*/}
                     <form onSubmit={handleSubmit} className="form">
                         <div className="form-grid">
                             <div className="form-group">
