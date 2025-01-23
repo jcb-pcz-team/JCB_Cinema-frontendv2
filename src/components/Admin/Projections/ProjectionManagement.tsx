@@ -520,7 +520,6 @@ export const ProjectionManagement = () => {
                     <th onClick={() => handleSort('availableSeats')} style={{cursor: 'pointer'}}>
                         Available Seats {sortConfig?.key === 'availableSeats' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                     </th>
-                    <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -532,22 +531,6 @@ export const ProjectionManagement = () => {
                         <td>{projection.time}</td>
                         <td>{projection.type}</td>
                         <td>{projection.availableSeats}</td>
-                        <td>
-                            <div className="admin-table__actions">
-                                <button
-                                    className="button button--edit"
-                                    onClick={() => handleEdit(projection)}
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    className="button button--delete"
-                                    onClick={() => handleDelete(projection.id)}
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        </td>
                     </tr>
                 ))}
                 {sortedProjections.length === 0 && (

@@ -55,6 +55,14 @@ const api = {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error('Not authenticated');
 
+        const movieData = {
+            Title: formData.title,
+            Description: formData.description,
+            Duration: formData.duration,
+            ReleaseDate: formData.releaseDate,
+            Genre: formData.genre
+        };
+
         if (formData.posterFile) {
             const posterFormData = new FormData();
             posterFormData.append('File', formData.posterFile);
@@ -63,7 +71,9 @@ const api = {
 
             const posterResponse = await fetch('https://localhost:7101/api/photos/upload', {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
                 body: posterFormData
             });
 
@@ -78,32 +88,33 @@ const api = {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                title: formData.title,
-                description: formData.description,
-                duration: formData.duration,
-                releaseDate: formData.releaseDate,
-                genre: { genreName: formData.genre }
-            })
+            body: JSON.stringify(movieData)
         });
 
         if (!movieResponse.ok) {
             const errorData = await movieResponse.json();
             throw new Error(errorData.message || 'Failed to add movie');
         }
+
     },
 
-    deleteMovie: async (id: number): Promise<void> => {
+
+    deleteMovie: async (title: string): Promise<void> => {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error('Not authenticated');
 
-        const response = await fetch(`https://localhost:7101/api/movies/${id}`, {
+        const normalizedTitle = title.toLowerCase().replace(/\s+/g, '-');
+        const response = await fetch(`https://localhost:7101/api/movies/delete/${encodeURIComponent(normalizedTitle)}`, {
             method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
         });
 
         if (!response.ok) {
-            throw new Error('Failed to delete movie');
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to delete movie');
         }
     }
 };
@@ -182,9 +193,9 @@ export const MovieManagement: React.FC = () => {
         }
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = (title: string) => {
         if (window.confirm('Are you sure you want to delete this movie?')) {
-            deleteMovieMutation.mutate(id);
+            deleteMovieMutation.mutate(title);
         }
     };
 
@@ -353,7 +364,7 @@ export const MovieManagement: React.FC = () => {
                         <th onClick={() => handleSort('genre')}>
                             Genre {sortConfig?.key === 'genre' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                         </th>
-                        {/*<th>Actions</th>*/}
+                        <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -364,17 +375,17 @@ export const MovieManagement: React.FC = () => {
                             <td>{movie.duration} min</td>
                             <td>{movie.releaseDate}</td>
                             <td>{movie.genre.genreName}</td>
-                            {/*<td>*/}
-                            {/*    <div className="admin-table__actions">*/}
-                            {/*        <button*/}
-                            {/*            className="button button--delete"*/}
-                            {/*            onClick={() => handleDelete(movie.id)}*/}
-                            {/*            disabled={deleteMovieMutation.isPending}*/}
-                            {/*        >*/}
-                            {/*            {deleteMovieMutation.isPending ? 'Deleting...' : 'Delete'}*/}
-                            {/*        </button>*/}
-                            {/*    </div>*/}
-                            {/*</td>*/}
+                            <td>
+                                <div className="admin-table__actions">
+                                    <button
+                                        className="button button--delete"
+                                        onClick={() => handleDelete(movie.title)}
+                                        disabled={deleteMovieMutation.isPending}
+                                    >
+                                        {deleteMovieMutation.isPending ? 'Deleting...' : 'Delete'}
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                     ))}
                     {sortedMovies.length === 0 && (
